@@ -1,0 +1,10 @@
+﻿# secretos y entorno
+.env
+*.json
+!ficha_web/fixtures/**/*.json
+.venv/
+__pycache__/
+.pytest_cache/
+# originales con credenciales (Notion export)
+/0[0-9]_*.md
+/ExportBlock*

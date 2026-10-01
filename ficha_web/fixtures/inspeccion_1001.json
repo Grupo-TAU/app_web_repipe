@@ -1,0 +1,21 @@
+{
+  "id": "1001",
+  "ubicacion": "Av. Italia 3200 esq. Comercio",
+  "solicitante": "SOMS - Intendencia de Montevideo",
+  "operario": "J. Pérez",
+  "fecha": "2026-09-15",
+  "acceso": "Cámara",
+  "diametro": 300,
+  "material": "Hormigón",
+  "largo": 42.5,
+  "limpieza": "Realizada",
+  "conclusiones": "Se observa fisura longitudinal y raíces en junta.",
+  "observaciones": [
+    {"obs_interna": "Vecino avisó que hay olor desde hace 2 semanas."}
+  ],
+  "patologias": [
+    {"metros": 12.3, "patologia": "Fisura longitudinal", "nro_figura": 1},
+    {"metros": 27.0, "patologia": "Raíces en junta", "nro_figura": 2},
+    {"metros": 38.4, "patologia": "Deformación", "nro_figura": 3}
+  ]
+}

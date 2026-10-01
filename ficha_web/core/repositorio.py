@@ -1,0 +1,120 @@
+import json
+from abc import ABC, abstractmethod
+from copy import deepcopy
+from datetime import date
+from pathlib import Path
+
+from .config import RAIZ
+from .modelos import Inspeccion, Observacion, Patologia, id_valido
+
+
+class Repositorio(ABC):
+    @abstractmethod
+    def obtener(self, id_inspeccion: str) -> Inspeccion | None: ...
+
+    @abstractmethod
+    def guardar(self, insp: Inspeccion) -> str: ...
+
+    @abstractmethod
+    def guardar_carpeta_drive(self, id_inspeccion: str, folder_id: str) -> None: ...
+
+
+def a_payload(insp: Inspeccion) -> dict:
+    """Payload de la RPC guardar_inspeccion."""
+    return {
+        "id": insp.id,
+        "ubicacion": insp.ubicacion,
+        "solicitante": insp.solicitante,
+        "operario": insp.operario,
+        "fecha": insp.fecha.isoformat() if insp.fecha else None,
+        "acceso": insp.acceso,
+        "diametro": insp.diametro,
+        "material": insp.material,
+        "largo": insp.largo,
+        "limpieza": insp.limpieza,
+        "conclusiones": insp.conclusiones,
+        "drive_folder_id": insp.drive_folder_id,
+        "observaciones": [{"obs_interna": o.obs_interna} for o in insp.observaciones],
+        "patologias": [
+            {"metros": p.metros, "patologia": p.patologia, "nro_figura": p.nro_figura}
+            for p in insp.patologias
+        ],
+    }
+
+
+def desde_payload(d: dict) -> Inspeccion:
+    return Inspeccion(
+        id=d["id"],
+        ubicacion=d["ubicacion"],
+        solicitante=d.get("solicitante"),
+        operario=d.get("operario"),
+        fecha=date.fromisoformat(d["fecha"]) if d.get("fecha") else None,
+        acceso=d.get("acceso"),
+        diametro=d.get("diametro"),
+        material=d.get("material"),
+        largo=d.get("largo"),
+        limpieza=d.get("limpieza"),
+        conclusiones=d.get("conclusiones"),
+        drive_folder_id=d.get("drive_folder_id"),
+        observaciones=[Observacion(o["obs_interna"]) for o in d.get("observaciones", [])],
+        patologias=[
+            Patologia(p["patologia"], p.get("metros"), p.get("nro_figura"))
+            for p in d.get("patologias", [])
+        ],
+    )
+
+
+class MockRepositorio(Repositorio):
+    """En memoria, precargado con la inspección 1001 del seed del doc 02."""
+
+    def __init__(self, seed: Path = RAIZ / "fixtures" / "inspeccion_1001.json"):
+        self._datos: dict[str, dict] = {}
+        if seed.exists():
+            semilla = json.loads(seed.read_text(encoding="utf-8"))
+            self._datos[semilla["id"]] = semilla
+
+    def obtener(self, id_inspeccion):
+        d = self._datos.get(id_inspeccion)
+        return desde_payload(deepcopy(d)) if d else None
+
+    def guardar(self, insp):
+        if not id_valido(insp.id):
+            raise ValueError("El ID solo admite letras, números, punto, guion y guion bajo")
+        previo = self._datos.get(insp.id, {})
+        nuevo = a_payload(insp)
+        nuevo["drive_folder_id"] = nuevo["drive_folder_id"] or previo.get("drive_folder_id")
+        self._datos[insp.id] = nuevo
+        return insp.id
+
+    def guardar_carpeta_drive(self, id_inspeccion, folder_id):
+        if id_inspeccion in self._datos:
+            self._datos[id_inspeccion]["drive_folder_id"] = folder_id
+
+
+class SupabaseRepositorio(Repositorio):
+    """Usa un cliente ya autenticado con el usuario (para que RLS aplique)."""
+
+    def __init__(self, cliente):
+        self._sb = cliente
+
+    def obtener(self, id_inspeccion):
+        filas = self._sb.table("inspeccion").select("*").eq("id", id_inspeccion).limit(1).execute().data
+        if not filas:
+            return None
+        base = filas[0]
+        base["observaciones"] = (
+            self._sb.table("observaciones").select("obs_interna")
+            .eq("id_inspeccion", id_inspeccion).order("id").execute().data
+        )
+        base["patologias"] = (
+            self._sb.table("patologias").select("metros,patologia,nro_figura")
+            .eq("id_inspeccion", id_inspeccion).order("id").execute().data
+        )
+        return desde_payload(base)
+
+    def guardar(self, insp):
+        # Una sola transacción en la base: upsert + reemplazo de hijas
+        return self._sb.rpc("guardar_inspeccion", {"p": a_payload(insp)}).execute().data
+
+    def guardar_carpeta_drive(self, id_inspeccion, folder_id):
+        self._sb.table("inspeccion").update({"drive_folder_id": folder_id}).eq("id", id_inspeccion).execute()

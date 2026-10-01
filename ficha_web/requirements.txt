@@ -1,0 +1,10 @@
+streamlit>=1.40
+supabase>=2.10
+google-api-python-client>=2.140
+google-auth>=2.30
+google-auth-httplib2>=0.2
+Jinja2>=3.1
+weasyprint>=62
+Pillow>=10.1
+python-dotenv>=1.0
+pytest>=8
