@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ficha de inspección {{ id }} — {{ ubicacion }}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: #ffffff;
+    color: #4a5c70;
+    font-size: 14.5px;
+  }
+
+  /* ── Página ── */
+  .page {
+    width: 100%;
+    margin: 0;
+    background: #ffffff;
+  }
+
+  /* ── Cuerpo ── */
+  .body {
+    padding: 0;
+  }
+  .section-block {
+    margin-bottom: 0;
+    break-inside: avoid;
+  }
+  /* El registro fotográfico sí puede cortar entre filas de fotos */
+  .section-block.fotos { break-inside: auto; }
+  .section-block.fotos .section-header { break-after: avoid; }
+  .img-grid tr { break-inside: avoid; }
+
+  /* ── Cabecera de sección ── */
+  .section-header {
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #ffffff;
+    background-color: rgb(50, 84, 35);
+    padding: 4px 8px;
+  }
+
+  /* ── Tabla de datos ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+  }
+  .data-table td {
+    border: 1px solid #c8d0d8;
+    padding: 4px 7px;
+    vertical-align: middle;
+    line-height: 1.35;
+  }
+  .data-table td.label {
+    font-weight: 600;
+    background-color: rgb(122, 182, 115);
+    color: #222222;
+    white-space: nowrap;
+    font-size: 13.5px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    width: 110px;
+  }
+  .data-table td.value {
+    color: #3f3f3f;
+    background: #ffffff;
+  }
+
+  /* ── Tabla inspección ── */
+  .insp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+  }
+  .insp-table td {
+    border: 1px solid #c8d0d8;
+    padding: 4px 7px;
+    vertical-align: middle;
+    line-height: 1.35;
+  }
+  .insp-table td.label {
+    font-weight: 600;
+    background-color: rgb(122, 182, 115);
+    color: #222222;
+    white-space: nowrap;
+    font-size: 13.5px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    width: 80px;
+  }
+  .insp-table td.value {
+    color: #3f3f3f;
+    background: #ffffff;
+  }
+
+  /* ── Observaciones ── */
+  .obs-box {
+    border: 1px solid #c8d0d8;
+    padding: 8px 10px;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: #3f3f3f;
+    background: #ffffff;
+    white-space: pre-line;
+  }
+  .obs-box p { margin-bottom: 5px; }
+  .obs-box p:last-child { margin-bottom: 0; }
+
+  /* ── Grilla de imágenes (tabla nativa) ── */
+  .img-grid {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 6px;
+  }
+  .img-grid td {
+    width: 33.33%;
+    vertical-align: top;
+    text-align: center;
+    padding: 0;
+  }
+  .img-wrap {
+    width: 100%;
+    /* recuadro 4:3 */
+    padding-bottom: 75%;
+    background: transparent;
+    border: none;
+    overflow: hidden;
+    position: relative;
+  }
+  .img-wrap img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .fig-label {
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7a8d;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding-top: 3px;
+    display: block;
+  }
+
+  /* ── Estado badge ── */
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .badge-pendiente { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+  .badge-realizada { background: #d1e7dd; color: #0a5c36; border: 1px solid #2e8b57; }
+  .badge-parcial   { background: #cfe2ff; color: #084298; border: 1px solid #0d6efd; }
+  .badge-noreali   { background: #f8d7da; color: #842029; border: 1px solid #dc3545; }
+
+  /* ── Adaptaciones ficha_web ── */
+  @page { size: {{ pagina }}; margin: {{ margen }}; }
+  .fig-label-bar {
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #ffffff;
+    background-color: rgb(50, 84, 35);
+    padding: 3px 6px;
+    text-align: center;
+  }
+  .sin-foto {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #e6e9ec;
+    color: #8a96a3;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .obs-box.conclusiones { min-height: 20mm; }
+  .fig-label { text-transform: none; letter-spacing: .02em; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="body">
+
+    <!-- INFORMACIÓN GENERAL -->
+    <div class="section-block">
+      <div class="section-header">Información general</div>
+      <table class="data-table">
+        <tr>
+          <td class="label">Nº Inspección</td>
+          <td class="value">{{ id }}</td>
+          <td class="label">Solicitante</td>
+          <td class="value">{{ solicitante }}</td>
+        </tr>
+        <tr>
+          <td class="label">Fecha</td>
+          <td class="value">{{ fecha }}</td>
+          <td class="label">Acceso</td>
+          <td class="value">{{ acceso }}</td>
+        </tr>
+        <tr>
+          <td class="label">Ubicación</td>
+          <td class="value" colspan="3"><strong>{{ ubicacion }}</strong></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- DATOS DE LA INSPECCIÓN -->
+    <div class="section-block">
+      <div class="section-header">Datos de la inspección</div>
+      <table class="insp-table">
+        <tr>
+          <td class="label">Operario</td>
+          <td class="value">{{ operario }}</td>
+          <td class="label">Material</td>
+          <td class="value">{{ material }}</td>
+        </tr>
+        <tr>
+          <td class="label">Diámetro (mm)</td>
+          <td class="value">{{ diametro }}</td>
+          <td class="label">Largo (m)</td>
+          <td class="value">{{ largo }}</td>
+        </tr>
+        <tr>
+          <td class="label">Limpieza</td>
+          <td class="value" colspan="3">{{ limpieza }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- OBSERVACIONES: una línea por patología, por metros ascendente -->
+    <div class="section-block">
+      <div class="section-header">Observaciones</div>
+      <div class="obs-box" style="min-height:40mm;">{% for linea in observaciones %}<p>{{ linea }}</p>{% endfor %}</div>
+    </div>
+
+    <!-- CONCLUSIONES -->
+    <div class="section-block" style="margin-top:6mm;">
+      <div class="section-header">Conclusiones</div>
+      <div class="obs-box conclusiones">{{ conclusiones }}</div>
+    </div>
+
+    {# TODO croquis #}
+
+    <!-- REGISTRO FOTOGRÁFICO -->
+    <div class="section-block fotos">
+      <div class="section-header">Registro fotográfico</div>
+
+      <table class="img-grid">
+        <tr>
+          {% for f in fotos_fijas %}
+          <td>
+            <div class="fig-label-bar">{{ f.etiqueta }}</div>
+            <div class="img-wrap">{% if f.src %}<img src="{{ f.src }}" alt="{{ f.etiqueta }}">{% else %}<div class="sin-foto">Sin foto</div>{% endif %}</div>
+          </td>
+          {% endfor %}
+        </tr>
+      </table>
+
+      <table class="img-grid">
+        {% for fila in filas_figuras %}
+        <tr>
+          {% for f in fila %}
+          <td>
+            {% if f %}
+            <div class="img-wrap">{% if f.src %}<img src="{{ f.src }}" alt="Fig. {{ f.nro }}">{% else %}<div class="sin-foto">Sin foto</div>{% endif %}</div>
+            <span class="fig-label">{{ f.pie }}</span>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+  </div><!-- /body -->
+</div><!-- /page -->
+
+</body>
+</html>

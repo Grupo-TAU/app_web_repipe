@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    env_file:
+      - path: .env
+        required: false          # sin .env arranca en modo mock
+    environment:
+      - USE_MOCK=${USE_MOCK:-1}
+    # Para Drive real: montar el JSON de la cuenta de servicio SOLO LECTURA (nunca dentro de la imagen)
+    # y poner GOOGLE_SA_JSON_PATH=/run/secrets/sa.json en .env
+    # volumes:
+    #   - C:/secretos/cuenta-servicio.json:/run/secrets/sa.json:ro
