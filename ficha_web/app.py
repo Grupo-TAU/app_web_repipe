@@ -7,6 +7,7 @@ from core.auth import iniciar_sesion
 st.set_page_config(page_title="Fichas de inspección", page_icon="📋", layout="wide")
 
 cfg = ui.config()
+ui.estilos()
 
 
 def pantalla_login():

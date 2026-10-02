@@ -195,6 +195,18 @@
   }
   .obs-box.conclusiones { min-height: 20mm; }
   .fig-label { text-transform: none; letter-spacing: .02em; }
+
+  /* Vista previa en pantallas angostas (solo screen: el PDF no se ve afectado) */
+  @media screen and (max-width: 700px) {
+    .data-table, .insp-table, .obs-box { font-size: 12px; }
+    .data-table td, .insp-table td { padding: 3px 4px; }
+    .data-table td.label, .insp-table td.label {
+      white-space: normal; width: auto; font-size: 10px; letter-spacing: 0;
+    }
+    .section-header { font-size: 12px; }
+    .img-grid { border-spacing: 3px; }
+    .fig-label, .fig-label-bar { font-size: 9.5px; letter-spacing: 0; }
+  }
 </style>
 </head>
 <body>

@@ -56,6 +56,25 @@ class _FuenteRota(FuenteFotos):
         raise FotosError(self._mensaje)
 
 
+_ESTILOS = """
+<style>
+/* Botones y campos cómodos para el dedo */
+.stButton > button, .stDownloadButton > button { min-height: 2.9rem; }
+.stTextInput input, .stNumberInput input, .stDateInput input { min-height: 2.6rem; font-size: 16px; }
+@media (max-width: 640px) {
+  .block-container { padding: 3.5rem 0.9rem 4rem 0.9rem !important; }
+  h1 { font-size: 1.6rem !important; }
+  .stButton > button, .stDownloadButton > button { width: 100%; }
+}
+</style>
+"""
+
+
+def estilos():
+    """CSS para móvil/tablet (los campos a 16px evitan el zoom automático de iOS)."""
+    st.markdown(_ESTILOS, unsafe_allow_html=True)
+
+
 def ir_a_ficha(id_inspeccion: str, ejecutar: bool = False):
     st.session_state["ficha_id_prefill"] = id_inspeccion
     st.session_state.pop("_ficha_cache", None)

@@ -65,6 +65,7 @@ python scripts/test_drive.py <ruta_al_json> <url_o_id_de_carpeta>
 - **Números**: hasta 2 decimales sin ceros finales (`27` y no `27,00`); el diámetro, 1 decimal.
 - **Cache** de imágenes (clave `(file_id, modifiedTime)`, TTL 10 min) y del listado de la carpeta padre (5 min) con un cache propio en memoria dentro de `core/`, en vez de `st.cache_data`, para que `core/` no dependa de Streamlit.
 - **`FuenteFotos.listar`** devuelve un `Listado(archivos, carpeta_id)`; así `core/ficha.py` guarda en la base el ID de carpeta resuelto sin acoplarse a Drive. Los problemas esperables de fotos se levantan como `FotosError` y se convierten en avisos.
+- **Responsive (celular/tablet)**: el formulario usa filas con sus propios campos (observaciones y patologías) en vez de `st.data_editor`, porque una tabla editable es incómoda con el dedo; en pantallas angostas las columnas se apilan. CSS en `ui.estilos()` (botones altos, campos a 16 px para evitar el zoom de iOS) y una regla `@media screen` en la plantilla para la vista previa; el PDF no se ve afectado. Probado en emulación de 375 px (sin scroll horizontal), no en un dispositivo real.
 - **Archivos extra** respecto a la estructura pedida: `ui.py` (pegamento con Streamlit), `core/auth.py` (login Supabase), `scripts/generar_fixtures.py`.
 - El **PDF y la vista previa** se arman una vez por ficha y se guardan en la sesión; se invalidan al guardar o al volver a pedir la ficha.
 - `pytest` va en `requirements.txt` (la imagen sirve también para correr los tests).

@@ -1,6 +1,5 @@
 from datetime import date
 
-import pandas as pd
 import streamlit as st
 
 import ui
@@ -12,22 +11,41 @@ st.title("Formulario de inspección")
 repo = ui.repositorio()
 ss = st.session_state
 
-COLS_OBS = ["obs_interna"]
-COLS_PAT = ["metros", "patologia", "nro_figura"]
 CAMPOS = {  # clave de widget -> valor por defecto
     "f_ubicacion": "", "f_solicitante": "", "f_operario": "", "f_fecha": date.today(),
     "f_acceso": "", "f_diametro": None, "f_material": "", "f_largo": None,
     "f_limpieza": "", "f_conclusiones": "", "f_drive": "",
 }
 
-# estado inicial
+# Observaciones y patologías son listas de filas con un uid; cada fila tiene sus propios widgets
+# (en pantallas chicas las columnas se apilan, a diferencia de una tabla editable).
 ss.setdefault("f_id", "")
-ss.setdefault("f_ver", 0)  # cambiar la versión reinicia los data_editor
-ss.setdefault("f_df_obs", pd.DataFrame(columns=COLS_OBS))
-ss.setdefault("f_df_pat", pd.DataFrame({"metros": pd.Series(dtype="float"), "patologia": pd.Series(dtype="str"),
-                                        "nro_figura": pd.Series(dtype="Int64")}))
+ss.setdefault("f_uid", 0)
+ss.setdefault("f_obs", [])
+ss.setdefault("f_pat", [])
 for k, v in CAMPOS.items():
     ss.setdefault(k, v)
+
+
+def _uid() -> int:
+    ss["f_uid"] += 1
+    return ss["f_uid"]
+
+
+def agregar_obs(texto: str = ""):
+    u = _uid()
+    ss["f_obs"].append(u)
+    ss[f"o_{u}"] = texto
+
+
+def agregar_pat(metros=None, patologia: str = "", figura=None):
+    u = _uid()
+    ss["f_pat"].append(u)
+    ss[f"pm_{u}"], ss[f"pp_{u}"], ss[f"pf_{u}"] = metros, patologia, figura
+
+
+def quitar(lista: str, u: int):
+    ss[lista].remove(u)
 
 
 def cargar(id_inspeccion: str):
@@ -41,13 +59,9 @@ def cargar(id_inspeccion: str):
     except Exception as e:
         ss["f_msg"] = ("error", f"No se pudo consultar la base: {e}")
         return
-    ss["f_ver"] += 1
+    ss["f_obs"], ss["f_pat"] = [], []
     if insp is None:
-        for k, v in CAMPOS.items():
-            ss[k] = v
-        ss["f_df_obs"] = pd.DataFrame(columns=COLS_OBS)
-        ss["f_df_pat"] = pd.DataFrame({"metros": pd.Series(dtype="float"), "patologia": pd.Series(dtype="str"),
-                                       "nro_figura": pd.Series(dtype="Int64")})
+        ss.update(CAMPOS)
         ss["f_msg"] = ("info", f"La inspección «{id_inspeccion}» no existe: formulario en blanco para crearla.")
         return
     ss.update({
@@ -57,12 +71,10 @@ def cargar(id_inspeccion: str):
         "f_limpieza": insp.limpieza or "", "f_conclusiones": insp.conclusiones or "",
         "f_drive": insp.drive_folder_id or "",
     })
-    ss["f_df_obs"] = pd.DataFrame({"obs_interna": [o.obs_interna for o in insp.observaciones]})
-    ss["f_df_pat"] = pd.DataFrame({
-        "metros": pd.Series([p.metros for p in insp.patologias], dtype="float"),
-        "patologia": pd.Series([p.patologia for p in insp.patologias], dtype="str"),
-        "nro_figura": pd.Series([p.nro_figura for p in insp.patologias], dtype="Int64"),
-    })
+    for o in insp.observaciones:
+        agregar_obs(o.obs_interna)
+    for p in insp.patologias:
+        agregar_pat(p.metros, p.patologia, p.nro_figura)
     ss["f_msg"] = ("success", f"Inspección «{id_inspeccion}» cargada.")
 
 
@@ -71,8 +83,8 @@ if "form_cargar_id" in ss:
     cargar(ss.pop("form_cargar_id"))
 
 c1, c2 = st.columns([3, 1], vertical_alignment="bottom")
-id_in = c1.text_input("ID de inspección", key="f_id")
-c2.button("Cargar", on_click=lambda: cargar(ss["f_id"]))
+c1.text_input("ID de inspección", key="f_id")
+c2.button("Cargar", on_click=lambda: cargar(ss["f_id"]), use_container_width=True)
 
 if "f_msg" in ss:
     tipo, texto = ss.pop("f_msg")
@@ -94,22 +106,22 @@ st.text_input("Link de la carpeta de Drive (opcional)", key="f_drive",
               help="Pegá el link de la carpeta de fotos o su ID. Si lo dejás vacío se busca por nombre «<id> - …».")
 
 st.subheader("Observaciones (internas, no se imprimen)")
-df_obs = st.data_editor(ss["f_df_obs"], num_rows="dynamic", use_container_width=True,
-                        key=f"f_obs_{ss['f_ver']}",
-                        column_config={"obs_interna": st.column_config.TextColumn("Observación interna")})
+for u in ss["f_obs"]:
+    col_t, col_x = st.columns([6, 1], vertical_alignment="center")
+    col_t.text_input("Observación interna", key=f"o_{u}", label_visibility="collapsed",
+                     placeholder="Observación interna")
+    col_x.button("🗑", key=f"xo_{u}", on_click=quitar, args=("f_obs", u), help="Quitar", use_container_width=True)
+st.button("➕ Agregar observación", on_click=agregar_obs)
 
 st.subheader("Patologías")
-df_pat = st.data_editor(ss["f_df_pat"], num_rows="dynamic", use_container_width=True,
-                        key=f"f_pat_{ss['f_ver']}",
-                        column_config={
-                            "metros": st.column_config.NumberColumn("Metros", min_value=0.0, format="%.2f"),
-                            "patologia": st.column_config.TextColumn("Patología"),
-                            "nro_figura": st.column_config.NumberColumn("N° figura", min_value=1, step=1),
-                        })
-
-
-def _num(v):
-    return None if pd.isna(v) else float(v)
+for u in ss["f_pat"]:
+    with st.container(border=True):
+        m, f, t, x = st.columns([2, 2, 6, 1], vertical_alignment="bottom")
+        m.number_input("Metros", key=f"pm_{u}", min_value=0.0, step=0.5, format="%.2f", value=None)
+        f.number_input("N° figura", key=f"pf_{u}", min_value=1, step=1, value=None)
+        t.text_input("Patología", key=f"pp_{u}")
+        x.button("🗑", key=f"xp_{u}", on_click=quitar, args=("f_pat", u), help="Quitar", use_container_width=True)
+st.button("➕ Agregar patología", on_click=agregar_pat)
 
 
 def construir() -> tuple[Inspeccion | None, list[str], list[str]]:
@@ -124,24 +136,23 @@ def construir() -> tuple[Inspeccion | None, list[str], list[str]]:
         errores.append("El link/ID de la carpeta de Drive no es válido.")
 
     pats = []
-    for _, fila in df_pat.iterrows():
-        nombre = "" if pd.isna(fila["patologia"]) else str(fila["patologia"]).strip()
-        metros = _num(fila["metros"])
-        fig = None if pd.isna(fila["nro_figura"]) else int(fila["nro_figura"])
+    for u in ss["f_pat"]:
+        nombre = (ss.get(f"pp_{u}") or "").strip()
+        metros = ss.get(f"pm_{u}")
+        fig = ss.get(f"pf_{u}")
+        fig = int(fig) if fig is not None else None
         if not nombre and metros is None and fig is None:
             continue
         if not nombre:
-            errores.append("Hay una fila de patologías sin descripción.")
+            errores.append("Hay una patología sin descripción.")
             continue
-        if metros is not None and metros < 0:
-            errores.append(f"Los metros de «{nombre}» no pueden ser negativos.")
         pats.append(Patologia(nombre, metros, fig))
     figuras = [p.nro_figura for p in pats if p.nro_figura is not None]
     repetidas = sorted({f for f in figuras if figuras.count(f) > 1})
     if repetidas:
         avisos.append("Figuras repetidas: " + ", ".join(map(str, repetidas)) + ". Se guarda igual.")
 
-    obs = [Observacion(str(o).strip()) for o in df_obs["obs_interna"] if not pd.isna(o) and str(o).strip()]
+    obs = [Observacion(t.strip()) for u in ss["f_obs"] if (t := ss.get(f"o_{u}") or "").strip()]
     if errores:
         return None, errores, avisos
     return Inspeccion(
@@ -155,8 +166,8 @@ def construir() -> tuple[Inspeccion | None, list[str], list[str]]:
     ), errores, avisos
 
 
-g, p = st.columns([1, 1])
-if g.button("Guardar", type="primary"):
+g, p = st.columns(2)
+if g.button("Guardar", type="primary", use_container_width=True):
     insp, errores, avisos = construir()
     for e in errores:
         st.error(e)
@@ -169,7 +180,7 @@ if g.button("Guardar", type="primary"):
             st.success(f"Inspección «{insp.id}» guardada.")
         except Exception as e:
             st.error(f"No se pudo guardar: {e}")
-if p.button("Sacar ficha PDF"):
+if p.button("Sacar ficha PDF", use_container_width=True):
     if not id_valido(ss["f_id"].strip()):
         st.error("Ingresá un ID válido.")
     else:
