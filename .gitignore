@@ -8,3 +8,7 @@ __pycache__/
 # originales con credenciales (Notion export)
 /0[0-9]_*.md
 /ExportBlock*
+
+# secretos de Streamlit
+.streamlit/secrets.toml
+ficha_web/.streamlit/secrets.toml

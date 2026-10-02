@@ -35,6 +35,15 @@ Preparación de los servicios: `docs/02_supabase_setup.md` (ejecutar `supabase/m
 
 Con Docker, para Drive montar el JSON como volumen de solo lectura (ver comentario en `docker-compose.yml`) y apuntar `GOOGLE_SA_JSON_PATH` a la ruta dentro del contenedor.
 
+## Hosting en Streamlit Community Cloud
+
+1. Subir el repo a GitHub (`Grupo-TAU/app_web_repipe`).
+2. En <https://share.streamlit.io> → **Create app** → elegir el repo, rama `main`, archivo principal `ficha_web/app.py`.
+3. **Advanced settings**: Python 3.12 y pegar en **Secrets** el contenido de `ficha_web/.streamlit/secrets.toml.example` con los valores reales (`USE_MOCK = "0"`).
+4. **Deploy**. Las librerías de sistema para WeasyPrint salen de `packages.txt` (raíz del repo).
+
+Limitaciones: la app se duerme tras unos días sin uso (despierta en segundos) y al recargar la página hay que volver a iniciar sesión.
+
 ## Tests
 
 ```bash
