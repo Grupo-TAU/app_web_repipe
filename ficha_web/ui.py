@@ -72,6 +72,15 @@ _ESTILOS = """
 """
 
 
+def ocultar_sidebar():
+    """Pantalla de login: ni menú lateral ni su botón de abrir/cerrar."""
+    st.markdown(
+        "<style>[data-testid='stSidebar'], [data-testid='stSidebarCollapsedControl'],"
+        " [data-testid='collapsedControl'] { display: none !important; }</style>",
+        unsafe_allow_html=True,
+    )
+
+
 def estilos():
     """CSS para móvil/tablet (los campos a 16px evitan el zoom automático de iOS)."""
     st.markdown(_ESTILOS, unsafe_allow_html=True)

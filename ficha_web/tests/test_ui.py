@@ -44,3 +44,31 @@ def test_guardar_ok(formulario):
     at = formulario
     _boton(at, "Guardar").click().run()
     assert not at.error and any("guardada" in s.value for s in at.success)
+
+
+def _app(monkeypatch, mock: bool):
+    monkeypatch.setenv("USE_MOCK", "1" if mock else "0")
+    monkeypatch.setenv("SUPABASE_URL", "http://localhost:9")
+    monkeypatch.setenv("SUPABASE_KEY", "sb_publishable_prueba")
+    import ui
+    ui.config.clear()
+    return AppTest.from_file(str(RAIZ / "app.py"), default_timeout=30).run()
+
+
+def test_sin_sesion_solo_se_ve_el_login(monkeypatch):
+    at = _app(monkeypatch, mock=False)
+    assert not at.exception
+    assert [b.label for b in at.button] == ["Ingresar"]     # sin «Cerrar sesión» ni páginas
+    assert at.text_input[1].proto.type == 1                   # contraseña oculta (password)
+    assert not any(t.value == "Formulario de inspección" for t in at.title)
+
+
+def test_login_con_campos_vacios_avisa(monkeypatch):
+    at = _app(monkeypatch, mock=False)
+    at.button[0].click().run()
+    assert any("Completá" in e.value for e in at.error)
+
+
+def test_con_mock_entra_directo(monkeypatch):
+    at = _app(monkeypatch, mock=True)
+    assert any(t.value == "Formulario de inspección" for t in at.title)
