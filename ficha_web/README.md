@@ -31,7 +31,7 @@ cp .env.example .env     # completar y poner USE_MOCK=0
 | `USE_MOCK` | `1` = modo mock |
 | `FOTOS_LOCAL_DIR` | Carpeta de fotos para modo mock |
 
-Preparación de los servicios: `docs/02_supabase_setup.md` (ejecutar `supabase/migrations/0001_init.sql`, crear usuarios, desactivar registro abierto) y `docs/03_drive_fotos_setup.md` (cuenta de servicio y permiso de Lector).
+Preparación de los servicios: `docs/02_supabase_setup.md` (ejecutar `supabase/migrations/0001_init.sql` y después `0002_opciones_y_figura_unica.sql`, crear usuarios, desactivar registro abierto) y `docs/03_drive_fotos_setup.md` (cuenta de servicio y permiso de Lector).
 
 Con Docker, para Drive montar el JSON como volumen de solo lectura (ver comentario en `docker-compose.yml`) y apuntar `GOOGLE_SA_JSON_PATH` a la ruta dentro del contenedor.
 
@@ -75,6 +75,8 @@ python scripts/test_drive.py <ruta_al_json> <url_o_id_de_carpeta>
 - **Cache** de imágenes (clave `(file_id, modifiedTime)`, TTL 10 min) y del listado de la carpeta padre (5 min) con un cache propio en memoria dentro de `core/`, en vez de `st.cache_data`, para que `core/` no dependa de Streamlit.
 - **`FuenteFotos.listar`** devuelve un `Listado(archivos, carpeta_id)`; así `core/ficha.py` guarda en la base el ID de carpeta resuelto sin acoplarse a Drive. Los problemas esperables de fotos se levantan como `FotosError` y se convierten en avisos.
 - **Responsive (celular/tablet)**: el formulario usa filas con sus propios campos (observaciones y patologías) en vez de `st.data_editor`, porque una tabla editable es incómoda con el dedo; en pantallas angostas las columnas se apilan. CSS en `ui.estilos()` (botones altos, campos a 16 px para evitar el zoom de iOS) y una regla `@media screen` en la plantilla para la vista previa; el PDF no se ve afectado. Probado en emulación de 375 px (sin scroll horizontal), no en un dispositivo real.
+- **Desplegables editables**: Operario y Material son `selectbox` alimentados por la tabla `opciones` (`categoria`, `valor`), que se edita desde la página **Configuración**. Las inspecciones guardan el texto elegido, sin FK: quitar una opción no toca las ya guardadas, y si una inspección vieja tiene un valor que ya no está en la lista, se sigue mostrando. Para sumar otra categoría: agregarla en `CATEGORIAS_OPCIONES` (`core/modelos.py`) y usar `ui.opciones("<categoria>")` en el formulario.
+- **`nro_figura` único por inspección**: restricción `unique (id_inspeccion, nro_figura)` en la base (migración 0002) y validación bloqueante en el formulario (antes solo avisaba). Varias patologías sin figura siguen permitidas.
 - **Archivos extra** respecto a la estructura pedida: `ui.py` (pegamento con Streamlit), `core/auth.py` (login Supabase), `scripts/generar_fixtures.py`.
 - El **PDF y la vista previa** se arman una vez por ficha y se guardan en la sesión; se invalidan al guardar o al volver a pedir la ficha.
 - `pytest` va en `requirements.txt` (la imagen sirve también para correr los tests).

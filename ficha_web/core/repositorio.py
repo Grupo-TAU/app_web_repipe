@@ -8,6 +8,22 @@ from .config import RAIZ
 from .modelos import Inspeccion, Observacion, Patologia, id_valido
 
 
+OPCIONES_SEMILLA = {  # mismo contenido que supabase/migrations/0002 (para el modo mock)
+    "operario": ["FE", "TP"],
+    "material": ["Hormigón", "PVC", "GRESS", "Hierro Fundido", "Gress - Hormigón",
+                 "Hormigón - PVC", "Gress - PVC", "Varios"],
+}
+
+
+class OpcionDuplicada(Exception):
+    pass
+
+
+def _figuras_repetidas(insp: Inspeccion) -> list[int]:
+    figuras = [p.nro_figura for p in insp.patologias if p.nro_figura is not None]
+    return sorted({f for f in figuras if figuras.count(f) > 1})
+
+
 class Repositorio(ABC):
     @abstractmethod
     def obtener(self, id_inspeccion: str) -> Inspeccion | None: ...
@@ -17,6 +33,15 @@ class Repositorio(ABC):
 
     @abstractmethod
     def guardar_carpeta_drive(self, id_inspeccion: str, folder_id: str) -> None: ...
+
+    @abstractmethod
+    def listar_opciones(self, categoria: str) -> list[str]: ...
+
+    @abstractmethod
+    def agregar_opcion(self, categoria: str, valor: str) -> None: ...
+
+    @abstractmethod
+    def quitar_opcion(self, categoria: str, valor: str) -> None: ...
 
 
 def a_payload(insp: Inspeccion) -> dict:
@@ -69,6 +94,7 @@ class MockRepositorio(Repositorio):
 
     def __init__(self, seed: Path = RAIZ / "fixtures" / "inspeccion_1001.json"):
         self._datos: dict[str, dict] = {}
+        self._opciones = {c: list(v) for c, v in OPCIONES_SEMILLA.items()}
         if seed.exists():
             semilla = json.loads(seed.read_text(encoding="utf-8"))
             self._datos[semilla["id"]] = semilla
@@ -80,6 +106,8 @@ class MockRepositorio(Repositorio):
     def guardar(self, insp):
         if not id_valido(insp.id):
             raise ValueError("El ID solo admite letras, números, punto, guion y guion bajo")
+        if rep := _figuras_repetidas(insp):
+            raise ValueError("Figuras repetidas en la misma inspección: " + ", ".join(map(str, rep)))
         previo = self._datos.get(insp.id, {})
         nuevo = a_payload(insp)
         nuevo["drive_folder_id"] = nuevo["drive_folder_id"] or previo.get("drive_folder_id")
@@ -89,6 +117,20 @@ class MockRepositorio(Repositorio):
     def guardar_carpeta_drive(self, id_inspeccion, folder_id):
         if id_inspeccion in self._datos:
             self._datos[id_inspeccion]["drive_folder_id"] = folder_id
+
+
+    def listar_opciones(self, categoria):
+        return list(self._opciones.get(categoria, []))
+
+    def agregar_opcion(self, categoria, valor):
+        lista = self._opciones.setdefault(categoria, [])
+        if valor.casefold() in (v.casefold() for v in lista):
+            raise OpcionDuplicada(valor)
+        lista.append(valor)
+
+    def quitar_opcion(self, categoria, valor):
+        if valor in self._opciones.get(categoria, []):
+            self._opciones[categoria].remove(valor)
 
 
 class SupabaseRepositorio(Repositorio):
@@ -118,3 +160,18 @@ class SupabaseRepositorio(Repositorio):
 
     def guardar_carpeta_drive(self, id_inspeccion, folder_id):
         self._sb.table("inspeccion").update({"drive_folder_id": folder_id}).eq("id", id_inspeccion).execute()
+
+    def listar_opciones(self, categoria):
+        filas = self._sb.table("opciones").select("valor").eq("categoria", categoria).order("id").execute().data
+        return [f["valor"] for f in filas]
+
+    def agregar_opcion(self, categoria, valor):
+        try:
+            self._sb.table("opciones").insert({"categoria": categoria, "valor": valor}).execute()
+        except Exception as e:
+            if "23505" in str(e) or "duplicate" in str(e).lower():
+                raise OpcionDuplicada(valor) from e
+            raise
+
+    def quitar_opcion(self, categoria, valor):
+        self._sb.table("opciones").delete().eq("categoria", categoria).eq("valor", valor).execute()

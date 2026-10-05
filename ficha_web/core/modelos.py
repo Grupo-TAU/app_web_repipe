@@ -2,6 +2,9 @@ import re
 from dataclasses import dataclass, field
 from datetime import date
 
+# Categorías de desplegables editables desde la app (para sumar una: agregarla acá y usarla en el formulario)
+CATEGORIAS_OPCIONES = {"operario": "Operarios", "material": "Materiales"}
+
 ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")  # mismo criterio que el CHECK de la base
 
 

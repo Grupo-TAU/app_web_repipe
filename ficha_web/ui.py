@@ -1,4 +1,6 @@
 """Pegamento Streamlit <-> core: configuración, repositorio y fuente de fotos por sesión."""
+import time
+
 import streamlit as st
 
 from core.config import Config, cargar_config
@@ -73,6 +75,28 @@ _ESTILOS = """
 def estilos():
     """CSS para móvil/tablet (los campos a 16px evitan el zoom automático de iOS)."""
     st.markdown(_ESTILOS, unsafe_allow_html=True)
+
+
+TTL_OPCIONES = 60  # s
+
+
+def opciones(categoria: str) -> list[str]:
+    """Valores del desplegable; cacheados un minuto por sesión (se refrescan al editarlos)."""
+    clave = f"_opc_{categoria}"
+    hit = st.session_state.get(clave)
+    if hit and time.time() - hit[0] < TTL_OPCIONES:
+        return hit[1]
+    try:
+        valores = repositorio().listar_opciones(categoria)
+    except Exception:
+        return hit[1] if hit else []
+    st.session_state[clave] = (time.time(), valores)
+    return valores
+
+
+def refrescar_opciones():
+    for k in [k for k in st.session_state if str(k).startswith("_opc_")]:
+        del st.session_state[k]
 
 
 def ir_a_ficha(id_inspeccion: str, ejecutar: bool = False):

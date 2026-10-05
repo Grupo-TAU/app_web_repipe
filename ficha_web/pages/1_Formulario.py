@@ -12,8 +12,8 @@ repo = ui.repositorio()
 ss = st.session_state
 
 CAMPOS = {  # clave de widget -> valor por defecto
-    "f_ubicacion": "", "f_solicitante": "", "f_operario": "", "f_fecha": date.today(),
-    "f_acceso": "", "f_diametro": None, "f_material": "", "f_largo": None,
+    "f_ubicacion": "", "f_solicitante": "", "f_operario": None, "f_fecha": date.today(),
+    "f_acceso": "", "f_diametro": None, "f_material": None, "f_largo": None,
     "f_limpieza": "", "f_conclusiones": "", "f_drive": "",
 }
 
@@ -66,8 +66,8 @@ def cargar(id_inspeccion: str):
         return
     ss.update({
         "f_ubicacion": insp.ubicacion or "", "f_solicitante": insp.solicitante or "",
-        "f_operario": insp.operario or "", "f_fecha": insp.fecha, "f_acceso": insp.acceso or "",
-        "f_diametro": insp.diametro, "f_material": insp.material or "", "f_largo": insp.largo,
+        "f_operario": insp.operario or None, "f_fecha": insp.fecha, "f_acceso": insp.acceso or "",
+        "f_diametro": insp.diametro, "f_material": insp.material or None, "f_largo": insp.largo,
         "f_limpieza": insp.limpieza or "", "f_conclusiones": insp.conclusiones or "",
         "f_drive": insp.drive_folder_id or "",
     })
@@ -91,14 +91,23 @@ if "f_msg" in ss:
     getattr(st, tipo)(texto)
 
 st.text_input("Ubicación *", key="f_ubicacion")
+def _opciones(categoria: str, key: str) -> list[str]:
+    """Opciones del desplegable + el valor actual si ya no está en la lista (inspecciones viejas)."""
+    lista = ui.opciones(categoria)
+    actual = ss.get(key)
+    return lista + [actual] if actual and actual not in lista else lista
+
+
 a, b, c = st.columns(3)
 a.text_input("Solicitante", key="f_solicitante")
-b.text_input("Operario", key="f_operario")
+b.selectbox("Operario", _opciones("operario", "f_operario"), index=None, key="f_operario",
+            placeholder="Elegir…", help="¿No está? Agregalo en Configuración.")
 c.date_input("Fecha", key="f_fecha", format="DD/MM/YYYY")
 a, b, c, d = st.columns(4)
 a.text_input("Acceso", key="f_acceso")
 b.number_input("Diámetro (mm)", key="f_diametro", min_value=0.0, step=1.0, format="%.1f", value=None)
-c.text_input("Material", key="f_material")
+c.selectbox("Material", _opciones("material", "f_material"), index=None, key="f_material",
+            placeholder="Elegir…", help="¿No está? Agregalo en Configuración.")
 d.number_input("Largo (m)", key="f_largo", min_value=0.0, step=0.5, format="%.2f", value=None)
 st.text_input("Limpieza", key="f_limpieza")
 st.text_area("Conclusiones", key="f_conclusiones")
@@ -149,17 +158,17 @@ def construir() -> tuple[Inspeccion | None, list[str], list[str]]:
         pats.append(Patologia(nombre, metros, fig))
     figuras = [p.nro_figura for p in pats if p.nro_figura is not None]
     repetidas = sorted({f for f in figuras if figuras.count(f) > 1})
-    if repetidas:
-        avisos.append("Figuras repetidas: " + ", ".join(map(str, repetidas)) + ". Se guarda igual.")
+    if repetidas:  # el N° de figura es único por inspección (también lo exige la base)
+        errores.append("N° de figura repetido: " + ", ".join(map(str, repetidas)) + ". Cada figura puede usarse una sola vez.")
 
     obs = [Observacion(t.strip()) for u in ss["f_obs"] if (t := ss.get(f"o_{u}") or "").strip()]
     if errores:
         return None, errores, avisos
     return Inspeccion(
         id=id_, ubicacion=ss["f_ubicacion"].strip(),
-        solicitante=ss["f_solicitante"].strip() or None, operario=ss["f_operario"].strip() or None,
+        solicitante=ss["f_solicitante"].strip() or None, operario=ss["f_operario"] or None,
         fecha=ss["f_fecha"], acceso=ss["f_acceso"].strip() or None,
-        diametro=ss["f_diametro"], material=ss["f_material"].strip() or None,
+        diametro=ss["f_diametro"], material=ss["f_material"] or None,
         largo=ss["f_largo"], limpieza=ss["f_limpieza"].strip() or None,
         conclusiones=ss["f_conclusiones"].strip() or None, drive_folder_id=carpeta or None,
         observaciones=obs, patologias=pats,
