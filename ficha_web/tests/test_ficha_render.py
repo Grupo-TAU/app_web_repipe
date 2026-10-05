@@ -6,7 +6,7 @@ from core.render import render_html, render_pdf
 
 def test_armar_ficha_mock_avisa_fig_3(repo, fuente):
     f = armar_ficha("1001", repo, fuente)
-    assert all(f.fijas[k] is not None for k in ("general", "tapa", "camara"))
+    assert all(f.fijas[k] is not None for k in ("general", "acceso_1", "acceso_2"))
     assert set(f.figuras) == {1, 2}
     assert any("Fig. 3" in a and "no tiene foto" in a for a in f.avisos)
     assert len(f.avisos) == 1

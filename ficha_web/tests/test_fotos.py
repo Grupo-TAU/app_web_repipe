@@ -4,15 +4,19 @@ from core.fotos import ArchivoFoto, clasificar_archivos, clasificar_nombre, extr
 
 
 @pytest.mark.parametrize("nombre,esperado", [
-    ("General.jpg", ("fija", "general")),
-    ("TAPA.png", ("fija", "tapa")),
-    ("Cámara.jpeg", ("fija", "camara")),
-    ("Camara.jpg", ("fija", "camara")),
+    ("general.jpg", ("fija", "general")),
+    ("General.JPG", ("fija", "general")),
+    ("acceso_1.jpg", ("fija", "acceso_1")),
+    ("Acceso 2.png", ("fija", "acceso_2")),
+    ("acceso-02.jpeg", ("fija", "acceso_2")),
+    ("acceso_3.jpg", None),
+    ("acceso.jpg", None),
+    ("1.jpg", ("figura", 1)),
+    ("04.jpg", ("figura", 4)),
     ("Fig_01.jpg", ("figura", 1)),
-    ("Fig 02.jpg", ("figura", 2)),
     ("Figura-3.jpg", ("figura", 3)),
-    ("4.jpg", ("figura", 4)),
     ("IMG_2031.jpg", None),
+    ("v3.jpeg", None),
     ("0.jpg", None),
 ])
 def test_clasificar_nombre(nombre, esperado):
@@ -21,9 +25,11 @@ def test_clasificar_nombre(nombre, esperado):
 
 def test_duplicados_usa_el_primero_alfabetico_y_avisa():
     archivos = [ArchivoFoto("b", "Fig_2.jpg"), ArchivoFoto("a", "2.jpg"), ArchivoFoto("c", "IMG_1.jpg")]
+    archivos += [ArchivoFoto("d", "acceso_1.jpg"), ArchivoFoto("e", "Acceso 1.jpg")]
     c = clasificar_archivos(archivos)
     assert c.figuras[2].nombre == "2.jpg"
-    assert len(c.avisos) == 1 and "Fig. 2" in c.avisos[0]
+    assert c.fijas["acceso_1"].nombre == "Acceso 1.jpg"   # orden alfabético sin distinguir mayúsculas
+    assert len(c.avisos) == 2 and any("Fig. 2" in a for a in c.avisos) and any("Acceso 1" in a for a in c.avisos)
     assert [a.nombre for a in c.sin_clasificar] == ["IMG_1.jpg"]
 
 

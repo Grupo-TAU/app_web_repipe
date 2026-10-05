@@ -8,6 +8,7 @@ from PIL import Image, ImageOps
 
 from . import formato
 from .config import RAIZ, Config
+from .fotos import ETIQUETAS_FIJAS
 from .modelos import FichaDatos
 
 ANCHO_MAX = 1600
@@ -44,7 +45,7 @@ def contexto(ficha: FichaDatos, cfg: Config | None = None) -> dict:
 
     fotos_fijas = [
         {"etiqueta": etiqueta, "src": f.data_uri if (f := ficha.fijas.get(clave)) else None}
-        for clave, etiqueta in (("general", "General"), ("tapa", "Tapa"), ("camara", "Cámara"))
+        for clave, etiqueta in ETIQUETAS_FIJAS.items()
     ]
 
     con_figura = sorted((p for p in i.patologias if p.nro_figura is not None), key=lambda p: p.nro_figura)

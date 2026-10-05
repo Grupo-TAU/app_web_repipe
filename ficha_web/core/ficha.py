@@ -3,12 +3,11 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from .fotos import ArchivoFoto, FotosError, FuenteFotos, clasificar_archivos
+from .fotos import ETIQUETAS_FIJAS, ArchivoFoto, FotosError, FuenteFotos, clasificar_archivos
 from .modelos import FichaDatos, Foto
 from .render import reducir_a_data_uri
 from .repositorio import Repositorio
 
-ETIQUETAS_FIJAS = {"general": "General", "tapa": "Tapa", "camara": "Cámara"}
 TTL_IMAGENES = 600  # s
 HILOS = 4
 

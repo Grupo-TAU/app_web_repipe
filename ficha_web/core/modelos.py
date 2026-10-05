@@ -49,6 +49,6 @@ class Foto:
 @dataclass
 class FichaDatos:
     inspeccion: Inspeccion
-    fijas: dict[str, Foto | None]            # claves: general, tapa, camara
+    fijas: dict[str, Foto | None]            # claves: general, acceso_1, acceso_2
     figuras: dict[int, Foto]                 # nro_figura -> foto
     avisos: list[str] = field(default_factory=list)

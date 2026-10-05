@@ -132,14 +132,14 @@ El problema: QField nombra las fotos `<N°_OS>-<timestamp>.<ext>`, y ese nombre 
 
 | Tipo | Nombre de archivo (cualquier extensión de imagen) |
 | --- | --- |
-| General | `General.jpg` |
-| Tapa | `Tapa.jpg` |
-| Cámara | `Camara.jpg` (con o sin tilde) |
-| Figura N | `Fig_1.jpg`, `Fig 02.jpg`, `Figura-3.jpg`, o solo `4.jpg` |
+| General | `general.jpg` |
+| Acceso 1 | `acceso_1.jpg` |
+| Acceso 2 | `acceso_2.jpg` |
+| Figura N | `1.jpg`, `2.jpg`, `3.jpg`… (también `Fig_1.jpg`, `Figura-3.jpg`) |
 
 Reglas de matching que implementa la app (sobre el nombre sin extensión, sin distinguir mayúsculas ni tildes):
 
-- Tipo fijo si el nombre contiene la palabra `general`, `tapa` o `camara`.
+- Tipo fijo si el nombre empieza con `general`, o es `acceso` + 1 o 2 (`acceso_1`, `Acceso 2`, `acceso-02`).
 - Figura N si coincide con `^(?:fig(?:ura)?[\s_-]*)?0*(\d+)$`.
 - Si hay más de una foto para la misma figura → se usa la primera por orden alfabético y se avisa en la vista previa.
 - Archivos que no encajan en ninguna regla se ignoran y se listan como aviso (“fotos sin clasificar”).

@@ -58,7 +58,7 @@ python scripts/test_drive.py <ruta_al_json> <url_o_id_de_carpeta>
 
 ## Convención de nombres de fotos
 
-`General`, `Tapa`, `Camara` (con o sin tilde) y `Fig_1`, `Fig 02`, `Figura-3` o `4`, cualquier extensión de imagen. Las reglas están al inicio de `core/fotos.py`.
+`general.jpg`, `acceso_1.jpg`, `acceso_2.jpg` (fotos fijas) y `1.jpg`, `2.jpg`, `3.jpg`… (una por figura, según `nro_figura`); cualquier extensión de imagen. Se toleran variantes como `Acceso 1` o `04`. Las reglas están al inicio de `core/fotos.py`.
 
 ## Notas
 

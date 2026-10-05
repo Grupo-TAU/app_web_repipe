@@ -13,7 +13,10 @@ from .config import Config
 from .modelos import Inspeccion
 
 # ── Reglas de clasificación (único lugar a tocar si cambia la convención de nombres) ──
-PALABRAS_FIJAS = ("general", "tapa", "camara")   # ya normalizadas (sin tildes, minúsculas)
+# Convención: general.jpg, acceso_1.jpg, acceso_2.jpg y 1.jpg, 2.jpg, 3.jpg... (figuras)
+ETIQUETAS_FIJAS = {"general": "General", "acceso_1": "Acceso 1", "acceso_2": "Acceso 2"}
+PATRON_GENERAL = re.compile(r"^general")
+PATRON_ACCESO = re.compile(r"^acceso[\s_-]*0*([12])$")
 PATRON_FIGURA = re.compile(r"^(?:fig(?:ura)?[\s_-]*)?0*(\d+)$")
 EXTENSIONES_LOCALES = {".jpg", ".jpeg", ".png", ".webp"}
 
@@ -57,11 +60,13 @@ def normalizar(nombre: str) -> str:
 
 
 def clasificar_nombre(nombre: str) -> tuple[str, str | int] | None:
-    """('fija', 'tapa') | ('figura', 3) | None."""
+    """('fija', 'acceso_1') | ('figura', 3) | None."""
     n = normalizar(nombre)
-    for palabra in PALABRAS_FIJAS:
-        if palabra in n:
-            return ("fija", palabra)
+    if PATRON_GENERAL.match(n):
+        return ("fija", "general")
+    m = PATRON_ACCESO.fullmatch(n)
+    if m:
+        return ("fija", f"acceso_{m.group(1)}")
     m = PATRON_FIGURA.fullmatch(n)
     if m and int(m.group(1)) > 0:
         return ("figura", int(m.group(1)))
@@ -77,7 +82,7 @@ def clasificar_archivos(archivos: list[ArchivoFoto]) -> Clasificacion:
             continue
         tipo, valor = c
         destino = res.fijas if tipo == "fija" else res.figuras
-        etiqueta = valor.capitalize() if tipo == "fija" else f"Fig. {valor}"
+        etiqueta = ETIQUETAS_FIJAS[valor] if tipo == "fija" else f"Fig. {valor}"
         if valor in destino:
             res.avisos.append(
                 f"Hay más de una foto para {etiqueta}: se usa «{destino[valor].nombre}» y se ignora «{a.nombre}»."
