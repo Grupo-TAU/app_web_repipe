@@ -1,0 +1,11 @@
+# Tema base claro, alineado con assets/repipe_style.css (los detalles finos van en ese CSS).
+# Copia idéntica en ../.streamlit/config.toml: Streamlit Cloud la busca en la raíz del repo.
+[theme]
+base = "light"
+primaryColor = "#2E7D3E"
+backgroundColor = "#F6F1E4"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#1B2A35"
+
+[browser]
+gatherUsageStats = false

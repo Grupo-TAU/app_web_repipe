@@ -72,3 +72,10 @@ def test_login_con_campos_vacios_avisa(monkeypatch):
 def test_con_mock_entra_directo(monkeypatch):
     at = _app(monkeypatch, mock=True)
     assert any(t.value == "Formulario de inspección" for t in at.title)
+
+
+def test_css_del_tema_no_se_escapa_como_texto():
+    import ui
+    css = ui._css()
+    assert css.count("</style>") == 1 and css.endswith("</style>")
+    assert "unsafe_allow_html" not in css and "--rp-green-500" in css
