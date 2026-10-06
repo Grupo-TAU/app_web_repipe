@@ -13,7 +13,8 @@ ss = st.session_state
 
 # Campos con desplegable editable desde Configuración: clave de widget -> categoría
 CAMPOS_OPCION = {
-    "f_solicitante": "solicitante", "f_operario": "operario", "f_acceso": "acceso",
+    "f_solicitante": "solicitante", "f_operario": "operario",
+    "f_acceso_1": "acceso", "f_acceso_2": "acceso",   # Acceso 1 y 2 comparten la misma lista de opciones
     "f_material": "material", "f_limpieza": "limpieza",
 }
 CAMPOS = {  # clave de widget -> valor por defecto
@@ -91,7 +92,8 @@ def cargar(id_inspeccion: str):
     })
     poner("f_solicitante", insp.solicitante)
     poner("f_operario", insp.operario)
-    poner("f_acceso", insp.acceso)
+    poner("f_acceso_1", insp.acceso_1)
+    poner("f_acceso_2", insp.acceso_2)
     poner("f_material", insp.material)
     poner("f_limpieza", insp.limpieza)
     for o in insp.observaciones:
@@ -150,12 +152,14 @@ a, b, c = st.columns(3)
 campo_opcion(a, "Solicitante", "f_solicitante", "solicitante")
 campo_opcion(b, "Operario", "f_operario", "operario")
 c.date_input("Fecha", key="f_fecha", format="DD/MM/YYYY")
-a, b, c, d = st.columns(4)
-campo_opcion(a, "Acceso", "f_acceso", "acceso")
-b.number_input("Diámetro (mm)", key="f_diametro", min_value=0.0, step=1.0, format="%.1f", value=None)
+a, b, c = st.columns(3)
+campo_opcion(a, "Acceso 1", "f_acceso_1", "acceso")
+campo_opcion(b, "Acceso 2", "f_acceso_2", "acceso")
 campo_opcion(c, "Material", "f_material", "material")
-d.number_input("Largo (m)", key="f_largo", min_value=0.0, step=0.5, format="%.2f", value=None)
-campo_opcion(st, "Limpieza", "f_limpieza", "limpieza")
+a, b, c = st.columns(3)
+a.number_input("Diámetro (mm)", key="f_diametro", min_value=0.0, step=1.0, format="%.1f", value=None)
+b.number_input("Largo (m)", key="f_largo", min_value=0.0, step=0.5, format="%.2f", value=None)
+campo_opcion(c, "Limpieza", "f_limpieza", "limpieza")
 st.text_area("Conclusiones", key="f_conclusiones")
 st.text_input("Link de la carpeta de Drive (opcional)", key="f_drive",
               help="Pegá el link de la carpeta de fotos o su ID. Si lo dejás vacío se busca por nombre «<id> - …».")
@@ -213,7 +217,7 @@ def construir() -> tuple[Inspeccion | None, list[str], list[str]]:
     return Inspeccion(
         id=id_, ubicacion=ss["f_ubicacion"].strip(),
         solicitante=valor("f_solicitante"), operario=valor("f_operario"),
-        fecha=ss["f_fecha"], acceso=valor("f_acceso"),
+        fecha=ss["f_fecha"], acceso_1=valor("f_acceso_1"), acceso_2=valor("f_acceso_2"),
         diametro=ss["f_diametro"], material=valor("f_material"),
         largo=ss["f_largo"], limpieza=valor("f_limpieza"),
         conclusiones=ss["f_conclusiones"].strip() or None, drive_folder_id=carpeta or None,

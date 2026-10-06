@@ -89,11 +89,14 @@ def test_campos_sin_opciones_son_texto_libre_y_se_guardan(formulario):
     at = formulario
     claves = [s.key for s in at.selectbox if s.key.startswith("f_")]
     assert claves == ["f_solicitante", "f_operario", "f_material", "f_limpieza"]   # «acceso» sin opciones: texto libre
-    at.text_input(key="f_acceso_t").set_value("Cámara de registro")      # «acceso» no tiene opciones
+    assert at.text_input(key="f_acceso_1_t").value == "Cámara"                    # el dato de la inspección se conserva
+    at.text_input(key="f_acceso_1_t").set_value("Cámara de registro")
+    at.text_input(key="f_acceso_2_t").set_value("Tapa de acceso")
     _boton(at, "Guardar").click().run()
     assert any("guardada" in s.value for s in at.success)
     from ui import repositorio
-    assert repositorio().obtener("1001").acceso == "Cámara de registro"
+    insp = repositorio().obtener("1001")
+    assert (insp.acceso_1, insp.acceso_2) == ("Cámara de registro", "Tapa de acceso")
 
 
 def test_fichas_lista_las_ultimas_inspecciones(monkeypatch):

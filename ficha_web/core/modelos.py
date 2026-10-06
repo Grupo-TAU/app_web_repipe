@@ -38,7 +38,8 @@ class Inspeccion:
     solicitante: str | None = None
     operario: str | None = None
     fecha: date | None = None
-    acceso: str | None = None
+    acceso_1: str | None = None
+    acceso_2: str | None = None
     diametro: float | None = None
     material: str | None = None
     largo: float | None = None
