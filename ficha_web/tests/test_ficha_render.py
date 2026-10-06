@@ -53,6 +53,7 @@ def test_fotos_de_patologias_de_a_2_en_16_9(repo, fuente):
 def test_logo_en_la_ficha(repo, fuente):
     html = render_html(armar_ficha("1001", repo, fuente))
     assert "data:image/png;base64," in html and 'alt="Repipe"' in html
+    assert "Inspección televisada de cañerías" in html and "Con cámara pértiga" in html
 
 
 def test_imagenes_se_reducen_a_1920_de_ancho():

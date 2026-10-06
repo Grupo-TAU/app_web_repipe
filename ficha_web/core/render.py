@@ -15,6 +15,8 @@ ANCHO_MAX = 1920   # fotos a escala 1920x1080 (16:9)
 CALIDAD_JPEG = 80
 COLUMNAS_FIGURAS = 2   # fotos de patologías: de a 2, en recuadros 16:9
 LOGO = RAIZ / "logo-repipe.png"
+ENCABEZADO_TITULO = "Inspección televisada de cañerías"
+ENCABEZADO_SUBTITULO = "Con cámara pértiga"
 
 _env = Environment(
     loader=FileSystemLoader(RAIZ / "templates"),
@@ -70,6 +72,8 @@ def contexto(ficha: FichaDatos, cfg: Config | None = None) -> dict:
         "pagina": cfg.pagina,
         "margen": cfg.margen,
         "logo": _logo_data_uri(),
+        "enc_titulo": ENCABEZADO_TITULO,
+        "enc_subtitulo": ENCABEZADO_SUBTITULO,
         "id": i.id,
         "ubicacion": i.ubicacion,
         "solicitante": formato.texto(i.solicitante),
