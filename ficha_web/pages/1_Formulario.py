@@ -11,10 +11,16 @@ st.title("Formulario de inspección")
 repo = ui.repositorio()
 ss = st.session_state
 
+# Campos con desplegable editable desde Configuración: clave de widget -> categoría
+CAMPOS_OPCION = {
+    "f_solicitante": "solicitante", "f_operario": "operario", "f_acceso": "acceso",
+    "f_material": "material", "f_limpieza": "limpieza",
+}
 CAMPOS = {  # clave de widget -> valor por defecto
-    "f_ubicacion": "", "f_solicitante": "", "f_operario": None, "f_fecha": date.today(),
-    "f_acceso": "", "f_diametro": None, "f_material": None, "f_largo": None,
-    "f_limpieza": "", "f_conclusiones": "", "f_drive": "",
+    "f_ubicacion": "", "f_fecha": date.today(), "f_diametro": None, "f_largo": None,
+    "f_conclusiones": "", "f_drive": "",
+    **{k: None for k in CAMPOS_OPCION},          # desplegable sin elegir...
+    **{k + "_t": "" for k in CAMPOS_OPCION},     # ...o texto libre si la categoría aún no tiene opciones
 }
 
 # Observaciones y patologías son listas de filas con un uid; cada fila tiene sus propios widgets
@@ -41,11 +47,25 @@ def agregar_obs(texto: str = ""):
 def agregar_pat(metros=None, patologia: str = "", figura=None):
     u = _uid()
     ss["f_pat"].append(u)
-    ss[f"pm_{u}"], ss[f"pp_{u}"], ss[f"pf_{u}"] = metros, patologia, figura
+    ss[f"pm_{u}"], ss[f"pf_{u}"] = metros, figura
+    poner(f"pp_{u}", patologia)
 
 
 def quitar(lista: str, u: int):
     ss[lista].remove(u)
+
+
+def poner(key: str, valor: str | None):
+    """Asigna un valor a un campo con desplegable (y a su variante de texto libre)."""
+    ss[key] = valor or None
+    ss[key + "_t"] = valor or ""
+
+
+def valor(key: str) -> str | None:
+    """Valor actual del campo, según esté dibujado como desplegable o como texto libre."""
+    if ss.get(key + "_modo") == "txt":
+        return (ss.get(key + "_t") or "").strip() or None
+    return ss.get(key) or None
 
 
 def cargar(id_inspeccion: str):
@@ -65,12 +85,15 @@ def cargar(id_inspeccion: str):
         ss["f_msg"] = ("info", f"La inspección «{id_inspeccion}» no existe: formulario en blanco para crearla.")
         return
     ss.update({
-        "f_ubicacion": insp.ubicacion or "", "f_solicitante": insp.solicitante or "",
-        "f_operario": insp.operario or None, "f_fecha": insp.fecha, "f_acceso": insp.acceso or "",
-        "f_diametro": insp.diametro, "f_material": insp.material or None, "f_largo": insp.largo,
-        "f_limpieza": insp.limpieza or "", "f_conclusiones": insp.conclusiones or "",
+        "f_ubicacion": insp.ubicacion or "", "f_fecha": insp.fecha, "f_diametro": insp.diametro,
+        "f_largo": insp.largo, "f_conclusiones": insp.conclusiones or "",
         "f_drive": insp.drive_folder_id or "",
     })
+    poner("f_solicitante", insp.solicitante)
+    poner("f_operario", insp.operario)
+    poner("f_acceso", insp.acceso)
+    poner("f_material", insp.material)
+    poner("f_limpieza", insp.limpieza)
     for o in insp.observaciones:
         agregar_obs(o.obs_interna)
     for p in insp.patologias:
@@ -90,7 +113,6 @@ if "f_msg" in ss:
     tipo, texto = ss.pop("f_msg")
     getattr(st, tipo)(texto)
 
-st.text_input("Ubicación *", key="f_ubicacion")
 def _opciones(categoria: str, key: str) -> list[str]:
     """Opciones del desplegable + el valor actual si ya no está en la lista (inspecciones viejas)."""
     lista = ui.opciones(categoria)
@@ -98,18 +120,34 @@ def _opciones(categoria: str, key: str) -> list[str]:
     return lista + [actual] if actual and actual not in lista else lista
 
 
+def campo_opcion(contenedor, etiqueta: str, key: str, categoria: str):
+    """Desplegable con las opciones configuradas; si la categoría aún no tiene, texto libre."""
+    previo = ss.get(key + "_modo")
+    if ui.opciones(categoria):
+        if previo == "txt" and ss.get(key + "_t"):      # se agregaron opciones: conservar lo escrito
+            ss[key] = ss[key + "_t"].strip() or None
+        ss[key + "_modo"] = "sel"
+        contenedor.selectbox(etiqueta, _opciones(categoria, key), index=None, key=key, placeholder="Elegir…",
+                             help="¿No está? Agregalo en Configuración.")
+    else:
+        if previo == "sel" and ss.get(key):             # se quedó sin opciones: conservar lo elegido
+            ss[key + "_t"] = ss[key]
+        ss[key + "_modo"] = "txt"
+        contenedor.text_input(etiqueta, key=key + "_t",
+                              help="Todavía no hay opciones: se escribe a mano. Cargalas en Configuración.")
+
+
+st.text_input("Ubicación *", key="f_ubicacion")
 a, b, c = st.columns(3)
-a.text_input("Solicitante", key="f_solicitante")
-b.selectbox("Operario", _opciones("operario", "f_operario"), index=None, key="f_operario",
-            placeholder="Elegir…", help="¿No está? Agregalo en Configuración.")
+campo_opcion(a, "Solicitante", "f_solicitante", "solicitante")
+campo_opcion(b, "Operario", "f_operario", "operario")
 c.date_input("Fecha", key="f_fecha", format="DD/MM/YYYY")
 a, b, c, d = st.columns(4)
-a.text_input("Acceso", key="f_acceso")
+campo_opcion(a, "Acceso", "f_acceso", "acceso")
 b.number_input("Diámetro (mm)", key="f_diametro", min_value=0.0, step=1.0, format="%.1f", value=None)
-c.selectbox("Material", _opciones("material", "f_material"), index=None, key="f_material",
-            placeholder="Elegir…", help="¿No está? Agregalo en Configuración.")
+campo_opcion(c, "Material", "f_material", "material")
 d.number_input("Largo (m)", key="f_largo", min_value=0.0, step=0.5, format="%.2f", value=None)
-st.text_input("Limpieza", key="f_limpieza")
+campo_opcion(st, "Limpieza", "f_limpieza", "limpieza")
 st.text_area("Conclusiones", key="f_conclusiones")
 st.text_input("Link de la carpeta de Drive (opcional)", key="f_drive",
               help="Pegá el link de la carpeta de fotos o su ID. Si lo dejás vacío se busca por nombre «<id> - …».")
@@ -128,7 +166,7 @@ for u in ss["f_pat"]:
         m, f, t, x = st.columns([2, 2, 6, 1], vertical_alignment="bottom")
         m.number_input("Metros", key=f"pm_{u}", min_value=0.0, step=0.5, format="%.2f", value=None)
         f.number_input("N° figura", key=f"pf_{u}", min_value=1, step=1, value=None)
-        t.text_input("Patología", key=f"pp_{u}")
+        campo_opcion(t, "Patología", f"pp_{u}", "patologia")
         x.button("🗑", key=f"xp_{u}", on_click=quitar, args=("f_pat", u), help="Quitar", use_container_width=True)
 st.button("➕ Agregar patología", on_click=agregar_pat)
 
@@ -146,7 +184,7 @@ def construir() -> tuple[Inspeccion | None, list[str], list[str]]:
 
     pats = []
     for u in ss["f_pat"]:
-        nombre = (ss.get(f"pp_{u}") or "").strip()
+        nombre = valor(f"pp_{u}") or ""
         metros = ss.get(f"pm_{u}")
         fig = ss.get(f"pf_{u}")
         fig = int(fig) if fig is not None else None
@@ -166,10 +204,10 @@ def construir() -> tuple[Inspeccion | None, list[str], list[str]]:
         return None, errores, avisos
     return Inspeccion(
         id=id_, ubicacion=ss["f_ubicacion"].strip(),
-        solicitante=ss["f_solicitante"].strip() or None, operario=ss["f_operario"] or None,
-        fecha=ss["f_fecha"], acceso=ss["f_acceso"].strip() or None,
-        diametro=ss["f_diametro"], material=ss["f_material"] or None,
-        largo=ss["f_largo"], limpieza=ss["f_limpieza"].strip() or None,
+        solicitante=valor("f_solicitante"), operario=valor("f_operario"),
+        fecha=ss["f_fecha"], acceso=valor("f_acceso"),
+        diametro=ss["f_diametro"], material=valor("f_material"),
+        largo=ss["f_largo"], limpieza=valor("f_limpieza"),
         conclusiones=ss["f_conclusiones"].strip() or None, drive_folder_id=carpeta or None,
         observaciones=obs, patologias=pats,
     ), errores, avisos

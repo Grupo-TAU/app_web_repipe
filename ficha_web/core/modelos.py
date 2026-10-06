@@ -3,7 +3,14 @@ from dataclasses import dataclass, field
 from datetime import date
 
 # Categorías de desplegables editables desde la app (para sumar una: agregarla acá y usarla en el formulario)
-CATEGORIAS_OPCIONES = {"operario": "Operarios", "material": "Materiales"}
+CATEGORIAS_OPCIONES = {
+    "solicitante": "Solicitantes",
+    "operario": "Operarios",
+    "acceso": "Accesos",
+    "material": "Materiales",
+    "limpieza": "Limpieza",
+    "patologia": "Patologías",
+}
 
 ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")  # mismo criterio que el CHECK de la base
 
@@ -40,6 +47,15 @@ class Inspeccion:
     drive_folder_id: str | None = None
     observaciones: list[Observacion] = field(default_factory=list)
     patologias: list[Patologia] = field(default_factory=list)
+
+
+@dataclass
+class ResumenInspeccion:
+    """Fila del listado de últimas inspecciones."""
+    id: str
+    ubicacion: str
+    fecha: date | None = None
+    operario: str | None = None
 
 
 @dataclass

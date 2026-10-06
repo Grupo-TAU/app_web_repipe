@@ -11,9 +11,10 @@ from .config import RAIZ, Config
 from .fotos import ETIQUETAS_FIJAS
 from .modelos import FichaDatos
 
-ANCHO_MAX = 1600
+ANCHO_MAX = 1920   # fotos a escala 1920x1080 (16:9)
 CALIDAD_JPEG = 80
-COLUMNAS = 3
+COLUMNAS_FIGURAS = 2   # fotos de patologías: de a 2, en recuadros 16:9
+LOGO = RAIZ / "logo-repipe.png"
 
 _env = Environment(
     loader=FileSystemLoader(RAIZ / "templates"),
@@ -30,6 +31,14 @@ def reducir_a_data_uri(datos: bytes) -> str:
     buf = io.BytesIO()
     img.save(buf, "JPEG", quality=CALIDAD_JPEG, optimize=True)
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
+
+def _logo_data_uri() -> str | None:
+    """Logo de Repipe incrustado (el PDF y la vista previa no dependen de archivos externos)."""
+    try:
+        return "data:image/png;base64," + base64.b64encode(LOGO.read_bytes()).decode("ascii")
+    except OSError:   # sin logo la ficha sale igual
+        return None
 
 
 def _linea_observacion(p) -> str:
@@ -54,12 +63,13 @@ def contexto(ficha: FichaDatos, cfg: Config | None = None) -> dict:
         foto = ficha.figuras.get(p.nro_figura)
         pie = f"Fig. {p.nro_figura} — {formato.numero(p.metros)} m — {p.patologia}"
         celdas.append({"nro": p.nro_figura, "src": foto.data_uri if foto else None, "pie": pie})
-    filas = [celdas[k:k + COLUMNAS] for k in range(0, len(celdas), COLUMNAS)]
-    filas = [fila + [None] * (COLUMNAS - len(fila)) for fila in filas]
+    filas = [celdas[k:k + COLUMNAS_FIGURAS] for k in range(0, len(celdas), COLUMNAS_FIGURAS)]
+    filas = [fila + [None] * (COLUMNAS_FIGURAS - len(fila)) for fila in filas]
 
     return {
         "pagina": cfg.pagina,
         "margen": cfg.margen,
+        "logo": _logo_data_uri(),
         "id": i.id,
         "ubicacion": i.ubicacion,
         "solicitante": formato.texto(i.solicitante),

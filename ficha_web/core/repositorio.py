@@ -5,11 +5,15 @@ from datetime import date
 from pathlib import Path
 
 from .config import RAIZ
-from .modelos import Inspeccion, Observacion, Patologia, id_valido
+from .modelos import Inspeccion, Observacion, Patologia, ResumenInspeccion, id_valido
 
 
-OPCIONES_SEMILLA = {  # mismo contenido que supabase/migrations/0002 (para el modo mock)
+OPCIONES_SEMILLA = {  # mismo contenido que supabase/migrations/0002 y 0003 (para el modo mock)
+    "solicitante": ["SOMS - Intendencia de Montevideo"],
     "operario": ["FE", "TP"],
+    "acceso": [],
+    "limpieza": ["Realizada", "No realizada"],
+    "patologia": [],
     "material": ["Hormigón", "PVC", "GRESS", "Hierro Fundido", "Gress - Hormigón",
                  "Hormigón - PVC", "Gress - PVC", "Varios"],
 }
@@ -33,6 +37,9 @@ class Repositorio(ABC):
 
     @abstractmethod
     def guardar_carpeta_drive(self, id_inspeccion: str, folder_id: str) -> None: ...
+
+    @abstractmethod
+    def listar_recientes(self, cantidad: int = 20) -> list[ResumenInspeccion]: ...
 
     @abstractmethod
     def listar_opciones(self, categoria: str) -> list[str]: ...
@@ -67,6 +74,13 @@ def a_payload(insp: Inspeccion) -> dict:
     }
 
 
+def _resumen(d: dict) -> ResumenInspeccion:
+    return ResumenInspeccion(
+        id=d["id"], ubicacion=d["ubicacion"], operario=d.get("operario"),
+        fecha=date.fromisoformat(d["fecha"]) if d.get("fecha") else None,
+    )
+
+
 def desde_payload(d: dict) -> Inspeccion:
     return Inspeccion(
         id=d["id"],
@@ -95,9 +109,11 @@ class MockRepositorio(Repositorio):
     def __init__(self, seed: Path = RAIZ / "fixtures" / "inspeccion_1001.json"):
         self._datos: dict[str, dict] = {}
         self._opciones = {c: list(v) for c, v in OPCIONES_SEMILLA.items()}
+        self._orden: list[str] = []   # ids, del más viejo al más recién guardado
         if seed.exists():
             semilla = json.loads(seed.read_text(encoding="utf-8"))
             self._datos[semilla["id"]] = semilla
+            self._orden.append(semilla["id"])
 
     def obtener(self, id_inspeccion):
         d = self._datos.get(id_inspeccion)
@@ -112,7 +128,13 @@ class MockRepositorio(Repositorio):
         nuevo = a_payload(insp)
         nuevo["drive_folder_id"] = nuevo["drive_folder_id"] or previo.get("drive_folder_id")
         self._datos[insp.id] = nuevo
+        if insp.id in self._orden:
+            self._orden.remove(insp.id)
+        self._orden.append(insp.id)
         return insp.id
+
+    def listar_recientes(self, cantidad=20):
+        return [_resumen(self._datos[i]) for i in reversed(self._orden)][:cantidad]
 
     def guardar_carpeta_drive(self, id_inspeccion, folder_id):
         if id_inspeccion in self._datos:
@@ -153,6 +175,13 @@ class SupabaseRepositorio(Repositorio):
             .eq("id_inspeccion", id_inspeccion).order("id").execute().data
         )
         return desde_payload(base)
+
+    def listar_recientes(self, cantidad=20):
+        filas = (
+            self._sb.table("inspeccion").select("id,ubicacion,fecha,operario,updated_at")
+            .order("updated_at", desc=True).limit(cantidad).execute().data
+        )
+        return [_resumen(f) for f in filas]
 
     def guardar(self, insp):
         # Una sola transacción en la base: upsert + reemplazo de hijas

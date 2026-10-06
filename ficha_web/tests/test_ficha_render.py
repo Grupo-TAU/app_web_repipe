@@ -38,3 +38,32 @@ def test_pdf_valido(repo, fuente):
     pytest.importorskip("weasyprint")
     pdf = render_pdf(render_html(armar_ficha("1001", repo, fuente)))
     assert pdf.startswith(b"%PDF") and len(pdf) > 5000
+
+
+def test_fotos_de_patologias_de_a_2_en_16_9(repo, fuente):
+    from core.render import contexto
+    f = armar_ficha("1001", repo, fuente)
+    filas = contexto(f)["filas_figuras"]
+    assert len(filas) == 2 and all(len(fila) == 2 for fila in filas)   # 3 figuras -> filas de 2, la última con hueco
+    assert filas[1][1] is None
+    html = render_html(f)
+    assert 'class="img-grid figuras"' in html and "padding-bottom: 56.25%" in html
+
+
+def test_logo_en_la_ficha(repo, fuente):
+    html = render_html(armar_ficha("1001", repo, fuente))
+    assert "data:image/png;base64," in html and 'alt="Repipe"' in html
+
+
+def test_imagenes_se_reducen_a_1920_de_ancho():
+    import base64
+    import io
+
+    from PIL import Image
+
+    from core.render import reducir_a_data_uri
+    buf = io.BytesIO()
+    Image.new("RGB", (4000, 3000), "gray").save(buf, "JPEG")
+    uri = reducir_a_data_uri(buf.getvalue())
+    img = Image.open(io.BytesIO(base64.b64decode(uri.split(",", 1)[1])))
+    assert img.width == 1920

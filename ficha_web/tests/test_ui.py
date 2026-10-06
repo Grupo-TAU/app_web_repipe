@@ -33,7 +33,7 @@ def test_figura_repetida_bloquea_el_guardado(formulario):
     at = formulario
     _boton(at, "➕ Agregar patología").click().run()
     nueva = at.session_state["f_pat"][-1]
-    at.text_input(key=f"pp_{nueva}").set_value("Otra")
+    at.text_input(key=f"pp_{nueva}_t").set_value("Otra")   # sin opciones de patología: texto libre
     at.number_input(key=f"pf_{nueva}").set_value(1)    # la Fig. 1 ya existe
     _boton(at, "Guardar").click().run()
     assert any("repetido" in e.value for e in at.error)
@@ -79,3 +79,22 @@ def test_css_del_tema_no_se_escapa_como_texto():
     css = ui._css()
     assert css.count("</style>") == 1 and css.endswith("</style>")
     assert "unsafe_allow_html" not in css and "--rp-green-500" in css
+
+
+def test_campos_sin_opciones_son_texto_libre_y_se_guardan(formulario):
+    at = formulario
+    assert [s.key for s in at.selectbox] == ["f_solicitante", "f_operario", "f_material", "f_limpieza"]
+    at.text_input(key="f_acceso_t").set_value("Cámara de registro")      # «acceso» no tiene opciones
+    _boton(at, "Guardar").click().run()
+    assert any("guardada" in s.value for s in at.success)
+    from ui import repositorio
+    assert repositorio().obtener("1001").acceso == "Cámara de registro"
+
+
+def test_fichas_lista_las_ultimas_inspecciones(monkeypatch):
+    monkeypatch.setenv("USE_MOCK", "1")
+    at = AppTest.from_file(str(RAIZ / "pages" / "2_Ficha.py"), default_timeout=30).run()
+    assert not at.exception
+    assert any("Últimas 20" in s.value for s in at.subheader)
+    assert any("1001" in m.value for m in at.markdown)
+    assert any(b.label == "Ver ficha" for b in at.button)

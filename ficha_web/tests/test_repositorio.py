@@ -43,3 +43,19 @@ def test_nro_figura_unico_por_inspeccion():
     insp.patologias[-1].nro_figura = None                # sin figura: permitido
     insp.patologias.append(Patologia("Otra más", 6.0, None))
     repo.guardar(insp)
+
+
+def test_listar_recientes_el_ultimo_guardado_primero():
+    repo = MockRepositorio()
+    repo.guardar(Inspeccion(id="2002", ubicacion="Otra calle"))
+    repo.guardar(Inspeccion(id="2003", ubicacion="Y otra"))
+    assert [r.id for r in repo.listar_recientes(20)] == ["2003", "2002", "1001"]
+    assert len(repo.listar_recientes(2)) == 2
+    repo.guardar(repo.obtener("1001"))                # volver a guardar la sube al tope
+    assert repo.listar_recientes()[0].id == "1001"
+
+
+def test_categorias_de_opciones():
+    from core.modelos import CATEGORIAS_OPCIONES
+    assert list(CATEGORIAS_OPCIONES) == ["solicitante", "operario", "acceso", "material", "limpieza", "patologia"]
+    assert MockRepositorio().listar_opciones("acceso") == []

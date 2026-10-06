@@ -194,6 +194,16 @@
     justify-content: center;
   }
   .obs-box.conclusiones { min-height: 20mm; }
+  .encabezado { width: 100%; border-collapse: collapse; margin-bottom: 4mm; }
+  .encabezado td { vertical-align: middle; padding: 0; }
+  .encabezado .logo-cell img { height: 14mm; width: auto; display: block; }
+  .encabezado .titulo-cell {
+    text-align: right; font-family: 'Arial Narrow', Arial, sans-serif; font-weight: 700;
+    font-size: 18px; letter-spacing: .12em; text-transform: uppercase; color: rgb(50, 84, 35);
+  }
+  /* Fotos de patologías: de a 2, recuadro 16:9 (1920x1080) */
+  .img-grid.figuras td { width: 50%; }
+  .img-grid.figuras .img-wrap { padding-bottom: 56.25%; }
   .fig-label { text-transform: none; letter-spacing: .02em; }
 
   /* Vista previa en pantallas angostas (solo screen: el PDF no se ve afectado) */
@@ -204,6 +214,8 @@
       white-space: normal; width: auto; font-size: 10px; letter-spacing: 0;
     }
     .section-header { font-size: 12px; }
+    .encabezado .titulo-cell { font-size: 13px; }
+    .encabezado .logo-cell img { height: 10mm; }
     .img-grid { border-spacing: 3px; }
     .fig-label, .fig-label-bar { font-size: 9.5px; letter-spacing: 0; }
   }
@@ -213,6 +225,14 @@
 
 <div class="page">
   <div class="body">
+
+    <!-- ENCABEZADO -->
+    <table class="encabezado">
+      <tr>
+        <td class="logo-cell">{% if logo %}<img src="{{ logo }}" alt="Repipe">{% endif %}</td>
+        <td class="titulo-cell">Ficha de inspección</td>
+      </tr>
+    </table>
 
     <!-- INFORMACIÓN GENERAL -->
     <div class="section-block">
@@ -289,7 +309,7 @@
         </tr>
       </table>
 
-      <table class="img-grid">
+      <table class="img-grid figuras">
         {% for fila in filas_figuras %}
         <tr>
           {% for f in fila %}

@@ -31,7 +31,7 @@ cp .env.example .env     # completar y poner USE_MOCK=0
 | `USE_MOCK` | `1` = modo mock |
 | `FOTOS_LOCAL_DIR` | Carpeta de fotos para modo mock |
 
-Preparación de los servicios: `docs/02_supabase_setup.md` (ejecutar `supabase/migrations/0001_init.sql` y después `0002_opciones_y_figura_unica.sql`, crear usuarios, desactivar registro abierto) y `docs/03_drive_fotos_setup.md` (cuenta de servicio y permiso de Lector).
+Preparación de los servicios: `docs/02_supabase_setup.md` (ejecutar `supabase/migrations/0001_init.sql` y después `0002_opciones_y_figura_unica.sql` y `0003_mas_opciones.sql`, crear usuarios, desactivar registro abierto) y `docs/03_drive_fotos_setup.md` (cuenta de servicio y permiso de Lector).
 
 Con Docker, para Drive montar el JSON como volumen de solo lectura (ver comentario en `docker-compose.yml`) y apuntar `GOOGLE_SA_JSON_PATH` a la ruta dentro del contenedor.
 
@@ -78,6 +78,11 @@ python scripts/test_drive.py <ruta_al_json> <url_o_id_de_carpeta>
 - **Desplegables editables**: Operario y Material son `selectbox` alimentados por la tabla `opciones` (`categoria`, `valor`), que se edita desde la página **Configuración**. Las inspecciones guardan el texto elegido, sin FK: quitar una opción no toca las ya guardadas, y si una inspección vieja tiene un valor que ya no está en la lista, se sigue mostrando. Para sumar otra categoría: agregarla en `CATEGORIAS_OPCIONES` (`core/modelos.py`) y usar `ui.opciones("<categoria>")` en el formulario.
 - **`nro_figura` único por inspección**: restricción `unique (id_inspeccion, nro_figura)` en la base (migración 0002) y validación bloqueante en el formulario (antes solo avisaba). Varias patologías sin figura siguen permitidas.
 - **Tema visual** (de Claude Design): `assets/repipe_style.css` se inyecta desde `ui.estilos()` junto con ajustes propios (`_AJUSTES` en `ui.py`): se le quitan los comentarios al cargarlo (el de cabecera menciona `</style>` y cerraría el bloque), se restituye la fuente de los íconos de Streamlit y se agregan los selectores de campos de las versiones nuevas de Streamlit, que ya no usan `data-baseweb`. `.streamlit/config.toml` fija el tema base claro; hay una copia idéntica en la raíz del repo porque Streamlit Cloud lo busca ahí. El CSS usa la fuente Manrope desde Google Fonts: sin internet cae a la tipografía por defecto.
+- **Desplegables**: Solicitante, Operario, Acceso, Material, Limpieza y Patología usan la tabla `opciones` (editable en **Configuración**). Quedan como texto libre: ubicación, fecha, diámetro, largo, metros, N° de figura, conclusiones y observaciones internas (son números, fechas o texto abierto). Si una categoría todavía no tiene opciones (hoy Acceso y Patología), el campo se escribe a mano en vez de bloquear la carga; apenas se cargan opciones pasa a ser desplegable. Los valores iniciales de `0003` (solicitante y limpieza) son un punto de partida a revisar.
+- **Estado del formulario entre pestañas**: Streamlit borra el estado de los widgets que no se dibujan en una ejecución, así que `app.py` reasigna las claves del formulario en cada carga; sin eso, ir a Configuración a agregar una opción vaciaba el formulario.
+- **Fotos de patologías**: de a 2 por fila en recuadros 16:9 (`object-fit: cover`: una foto 4:3 se recorta arriba y abajo) y reducidas a 1920 px de ancho. Las 3 fotos fijas (General, Acceso 1, Acceso 2) siguen en 3 columnas 4:3.
+- **Logo**: `logo-repipe.png` (raíz de `ficha_web/`) se incrusta en la ficha como data URI; si falta, la ficha sale sin logo.
+- **Fichas**: la pestaña lista las últimas 20 inspecciones guardadas (por `updated_at`) con botón «Ver ficha».
 - **Archivos extra** respecto a la estructura pedida: `ui.py` (pegamento con Streamlit), `core/auth.py` (login Supabase), `scripts/generar_fixtures.py`.
 - El **PDF y la vista previa** se arman una vez por ficha y se guardan en la sesión; se invalidan al guardar o al volver a pedir la ficha.
 - `pytest` va en `requirements.txt` (la imagen sirve también para correr los tests).

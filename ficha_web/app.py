@@ -52,9 +52,14 @@ elif st.sidebar.button("Cerrar sesión"):
     st.session_state.clear()
     st.rerun()
 
+# Streamlit borra el estado de los widgets que no se dibujan en una ejecución (p. ej. al ir a
+# Configuración a agregar una opción): se reasigna para no perder lo cargado en el Formulario.
+for _k in [k for k in st.session_state if str(k).startswith(("f_", "o_", "pm_", "pp_", "pf_"))]:
+    st.session_state[_k] = st.session_state[_k]
+
 navegacion = st.navigation([
     st.Page("pages/1_Formulario.py", title="Formulario", icon="📝", url_path="formulario", default=True),
-    st.Page("pages/2_Ficha.py", title="Ficha", icon="📄", url_path="ficha"),
+    st.Page("pages/2_Ficha.py", title="Fichas", icon="📄", url_path="ficha"),
     st.Page("pages/3_Vista_previa.py", title="Vista previa", icon="🔍", url_path="vista-previa"),
     st.Page("pages/4_Configuracion.py", title="Configuración", icon="⚙️", url_path="configuracion"),
 ])
