@@ -27,6 +27,7 @@ CAMPOS = {  # clave de widget -> valor por defecto
 # Observaciones y patologías son listas de filas con un uid; cada fila tiene sus propios widgets
 # (en pantallas chicas las columnas se apilan, a diferencia de una tabla editable).
 ss.setdefault("f_id", "")
+ss.setdefault("f_cargado", None)   # ID de la inspección cargada desde la base (None: formulario nuevo)
 ss.setdefault("f_uid", 0)
 ss.setdefault("f_obs", [])
 ss.setdefault("f_pat", [])
@@ -80,11 +81,16 @@ def cargar(id_inspeccion: str):
     except Exception as e:
         ss["f_msg"] = ("error", f"No se pudo consultar la base: {e}")
         return
-    ss["f_obs"], ss["f_pat"] = [], []
     if insp is None:
-        ss.update(CAMPOS)
-        ss["f_msg"] = ("info", f"La inspección «{id_inspeccion}» no existe: formulario en blanco para crearla.")
+        # ID nuevo. Si había otra inspección cargada se limpia el formulario; si no, se conserva lo escrito.
+        if ss["f_cargado"] is not None:
+            ss["f_obs"], ss["f_pat"] = [], []
+            ss.update(CAMPOS)
+            ss["f_cargado"] = None
+        ss["f_msg"] = ("info", f"Inspección nueva «{id_inspeccion}».")
         return
+    ss["f_obs"], ss["f_pat"] = [], []
+    ss["f_cargado"] = id_inspeccion
     ss.update({
         "f_ubicacion": insp.ubicacion or "", "f_fecha": insp.fecha, "f_diametro": insp.diametro,
         "f_largo": insp.largo, "f_conclusiones": insp.conclusiones or "",
@@ -107,9 +113,13 @@ def cargar(id_inspeccion: str):
 if "form_cargar_id" in ss:
     cargar(ss.pop("form_cargar_id"))
 
-c1, c2 = st.columns([3, 1], vertical_alignment="bottom")
-c1.text_input("ID de inspección", key="f_id")
-c2.button("Cargar", on_click=lambda: cargar(ss["f_id"]), use_container_width=True)
+def _al_cambiar_id():
+    if ss["f_id"].strip():
+        cargar(ss["f_id"])
+
+
+st.text_input("ID de inspección", key="f_id", on_change=_al_cambiar_id,
+              help="Escribí el ID y apretá Enter: si ya existe, se cargan sus datos para editarla; si no, es una inspección nueva.")
 
 if "f_msg" in ss:
     tipo, texto = ss.pop("f_msg")

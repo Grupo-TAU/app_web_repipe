@@ -14,7 +14,7 @@ from .modelos import FichaDatos
 ANCHO_MAX = 1920   # fotos a escala 1920x1080 (16:9)
 CALIDAD_JPEG = 80
 COLUMNAS_FIGURAS = 2   # fotos de patologías: de a 2, en recuadros 16:9
-LOGO = RAIZ / "logo-repipe.png"
+LOGO = RAIZ / "logo-repipe-claro.png"   # versión clara del logo, para el banner verde (ver scripts/generar_logo_claro.py)
 ENCABEZADO_TITULO = "Inspección televisada de cañerías"
 ENCABEZADO_SUBTITULO = "Con cámara pértiga"
 

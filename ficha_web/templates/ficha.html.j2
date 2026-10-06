@@ -194,6 +194,10 @@
     justify-content: center;
   }
   .obs-box.conclusiones { min-height: 20mm; }
+  /* Las dos tablas de datos comparten columnas (Fecha queda alineada con Material) */
+  .data-table, .insp-table { table-layout: fixed; }
+  .data-table td.label, .insp-table td.label { width: auto; }
+
   /* Encabezado: banner verde con título, subtítulo y logo a la derecha */
   .encabezado {
     width: 100%; border-collapse: collapse; margin-bottom: 4mm;
@@ -204,8 +208,8 @@
   .enc-titulo { font-weight: 700; font-size: 18px; text-transform: uppercase; letter-spacing: .01em; }
   .enc-sub { font-size: 14px; text-transform: uppercase; margin-top: 1mm; }
   .enc-logo { width: 1%; white-space: nowrap; text-align: right; }
-  /* el logo es oscuro: va sobre un recuadro blanco para que se lea sobre el verde */
-  .logo-tile { display: inline-block; background: #FFFFFF; border-radius: 1.5mm; padding: 1.2mm 2.5mm; }
+  /* el logo va directo sobre el verde del banner */
+  .logo-tile { display: inline-block; }
   .logo-tile img { height: 11mm; width: auto; display: block; }
   /* Fotos de patologías: de a 2, recuadro 16:9 (1920x1080) */
   .img-grid.figuras td { width: 50%; }
@@ -248,6 +252,7 @@
     <div class="section-block">
       <div class="section-header">Información general</div>
       <table class="data-table">
+        <colgroup><col style="width:20%"><col style="width:30%"><col style="width:20%"><col style="width:30%"></colgroup>
         <tr>
           <td class="label">Nº Inspección</td>
           <td class="value">{{ id }}</td>
@@ -269,6 +274,7 @@
     <div class="section-block">
       <div class="section-header">Datos de la inspección</div>
       <table class="insp-table">
+        <colgroup><col style="width:20%"><col style="width:30%"><col style="width:20%"><col style="width:30%"></colgroup>
         <tr>
           <td class="label">Operario</td>
           <td class="value">{{ operario }}</td>

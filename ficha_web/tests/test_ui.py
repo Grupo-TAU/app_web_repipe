@@ -12,8 +12,7 @@ def formulario(monkeypatch):
     monkeypatch.setenv("USE_MOCK", "1")
     at = AppTest.from_file(str(RAIZ / "pages" / "1_Formulario.py"), default_timeout=30)
     at.run()
-    at.text_input(key="f_id").set_value("1001")
-    at.button[0].click().run()          # Cargar
+    at.text_input(key="f_id").set_value("1001").run()      # al escribir un ID existente se cargan sus datos
     return at
 
 
@@ -115,11 +114,23 @@ def test_patologia_se_elige_de_la_lista_configurada(monkeypatch):
     from ui import repositorio
     repositorio().agregar_opcion("patologia", "Rotura de tubería")
     at = AppTest.from_file(str(RAIZ / "pages" / "1_Formulario.py"), default_timeout=30).run()
-    at.text_input(key="f_id").set_value("1001")
-    at.button[0].click().run()
+    at.text_input(key="f_id").set_value("1001").run()
     primera = at.session_state["f_pat"][0]
     assert "Rotura de tubería" in at.selectbox(key=f"pp_{primera}").options
     at.selectbox(key=f"pp_{primera}").set_value("Rotura de tubería")
     _boton(at, "Guardar").click().run()
     assert any("guardada" in x.value for x in at.success)
     assert any(p.patologia == "Rotura de tubería" for p in repositorio().obtener("1001").patologias)
+
+
+def test_sin_boton_cargar_y_id_nuevo_conserva_lo_escrito(monkeypatch):
+    monkeypatch.setenv("USE_MOCK", "1")
+    at = AppTest.from_file(str(RAIZ / "pages" / "1_Formulario.py"), default_timeout=30).run()
+    assert not any(b.label == "Cargar" for b in at.button)
+    at.text_input(key="f_ubicacion").set_value("Calle Nueva 123").run()
+    at.text_input(key="f_id").set_value("7777").run()                # ID inexistente: no borra lo que ya se escribió
+    assert at.text_input(key="f_ubicacion").value == "Calle Nueva 123"
+    at.text_input(key="f_id").set_value("1001").run()                # existente: carga sus datos
+    assert at.text_input(key="f_ubicacion").value == "Av. Italia 3200 esq. Comercio"
+    at.text_input(key="f_id").set_value("8888").run()                # ID nuevo tras una inspección cargada: formulario en blanco
+    assert at.text_input(key="f_ubicacion").value == ""
