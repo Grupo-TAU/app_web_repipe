@@ -12,7 +12,7 @@ OPCIONES_SEMILLA = {  # mismo contenido que supabase/migrations/0002 y 0003 (par
     "solicitante": ["SOMS - Intendencia de Montevideo"],
     "operario": ["FE", "TP"],
     "acceso": [],
-    "limpieza": ["Realizada", "No realizada"],
+    "limpieza": ["Si", "No"],
     "patologia": [],
     "material": ["Hormigón", "PVC", "GRESS", "Hierro Fundido", "Gress - Hormigón",
                  "Hormigón - PVC", "Gress - PVC", "Varios"],

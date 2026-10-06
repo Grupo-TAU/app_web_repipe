@@ -8,7 +8,7 @@
   "diametro": 300,
   "material": "Hormigón",
   "largo": 42.5,
-  "limpieza": "Realizada",
+  "limpieza": "Si",
   "conclusiones": "Se observa fisura longitudinal y raíces en junta.",
   "observaciones": [
     {"obs_interna": "Vecino avisó que hay olor desde hace 2 semanas."}

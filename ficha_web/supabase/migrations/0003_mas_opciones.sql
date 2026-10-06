@@ -9,8 +9,8 @@
 
 insert into public.opciones (categoria, valor) values
     ('solicitante', 'SOMS - Intendencia de Montevideo'),
-    ('limpieza', 'Realizada'),
-    ('limpieza', 'No realizada')
+    ('limpieza', 'Si'),
+    ('limpieza', 'No')
 on conflict do nothing;
 
 -- Índice para el listado de últimas inspecciones (página Fichas)
