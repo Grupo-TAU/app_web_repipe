@@ -120,15 +120,23 @@ def _opciones(categoria: str, key: str) -> list[str]:
     return lista + [actual] if actual and actual not in lista else lista
 
 
-def campo_opcion(contenedor, etiqueta: str, key: str, categoria: str):
-    """Desplegable con las opciones configuradas; si la categoría aún no tiene, texto libre."""
+def campo_opcion(contenedor, etiqueta: str, key: str, categoria: str, libre: bool = False):
+    """Desplegable con las opciones configuradas; si la categoría aún no tiene, texto libre.
+
+    Con `libre=True` el desplegable además deja escribir un valor nuevo (solo para esa fila/inspección,
+    sin sumarlo a la lista) y nunca cae a texto libre.
+    """
     previo = ss.get(key + "_modo")
-    if ui.opciones(categoria):
+    if libre or ui.opciones(categoria):
         if previo == "txt" and ss.get(key + "_t"):      # se agregaron opciones: conservar lo escrito
             ss[key] = ss[key + "_t"].strip() or None
         ss[key + "_modo"] = "sel"
-        contenedor.selectbox(etiqueta, _opciones(categoria, key), index=None, key=key, placeholder="Elegir…",
-                             help="¿No está? Agregalo en Configuración.")
+        contenedor.selectbox(
+            etiqueta, _opciones(categoria, key), index=None, key=key, accept_new_options=libre,
+            placeholder="Elegir o escribir…" if libre else "Elegir…",
+            help=("Elegí una descripción o escribí una nueva (solo para esta fila). "
+                  "Para sumarla a la lista, usá Configuración.") if libre
+            else "¿No está? Agregalo en Configuración.")
     else:
         if previo == "sel" and ss.get(key):             # se quedó sin opciones: conservar lo elegido
             ss[key + "_t"] = ss[key]
@@ -166,7 +174,7 @@ for u in ss["f_pat"]:
         m, f, t, x = st.columns([2, 2, 6, 1], vertical_alignment="bottom")
         m.number_input("Metros", key=f"pm_{u}", min_value=0.0, step=0.5, format="%.2f", value=None)
         f.number_input("N° figura", key=f"pf_{u}", min_value=1, step=1, value=None)
-        campo_opcion(t, "Patología", f"pp_{u}", "patologia")
+        campo_opcion(t, "Patología", f"pp_{u}", "patologia", libre=True)
         x.button("🗑", key=f"xp_{u}", on_click=quitar, args=("f_pat", u), help="Quitar", use_container_width=True)
 st.button("➕ Agregar patología", on_click=agregar_pat)
 

@@ -7,6 +7,8 @@ from core.repositorio import OpcionDuplicada
 st.title("Configuración")
 st.caption("Opciones de los desplegables del formulario. Quitar una opción no modifica las inspecciones ya guardadas.")
 
+MAX_OPCION = 300  # igual que el CHECK de la tabla opciones (migración 0004)
+
 repo = ui.repositorio()
 ss = st.session_state
 
@@ -27,8 +29,8 @@ def agregar(categoria: str):
     valor = " ".join((ss.get(f"cfg_nueva_{categoria}") or "").split())
     if not valor:
         return
-    if len(valor) > 80:
-        ss["cfg_msg"] = ("error", "La opción es demasiado larga (máximo 80 caracteres).")
+    if len(valor) > MAX_OPCION:
+        ss["cfg_msg"] = ("error", f"La opción es demasiado larga (máximo {MAX_OPCION} caracteres).")
         return
     try:
         repo.agregar_opcion(categoria, valor)
