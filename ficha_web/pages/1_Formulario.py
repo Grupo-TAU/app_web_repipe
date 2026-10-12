@@ -135,20 +135,31 @@ def _opciones(categoria: str, key: str) -> list[str]:
 def campo_opcion(contenedor, etiqueta: str, key: str, categoria: str, libre: bool = False):
     """Desplegable con las opciones configuradas; si la categoría aún no tiene, texto libre.
 
-    Con `libre=True` el desplegable además deja escribir un valor nuevo (solo para esa fila/inspección,
-    sin sumarlo a la lista) y nunca cae a texto libre.
+    Con `libre=True` es un cuadro de texto (se escribe lo que sea y se confirma con Enter) más un
+    desplegable de sugerencias que completa el texto. Lo escrito vale solo para esa fila/inspección,
+    sin sumarse a la lista.
     """
     previo = ss.get(key + "_modo")
-    if libre or ui.opciones(categoria):
+    if libre:
+        ss[key + "_modo"] = "txt"
+        contenedor.text_input(etiqueta, key=key + "_t", placeholder="Escribir…",
+                              help="Escribí lo que quieras (Enter para confirmar) o elegí una sugerencia. "
+                                   "Para sumarla a la lista, usá Configuración.")
+        sugerencias = ui.opciones(categoria)
+        if sugerencias:
+            def _usar_sugerencia(k=key):
+                ss[k + "_t"] = ss.get(k + "_s") or ss.get(k + "_t", "")
+                ss[k + "_s"] = None
+            contenedor.selectbox("Sugerencias", sugerencias, index=None, key=key + "_s",
+                                 on_change=_usar_sugerencia, placeholder="Sugerencias…",
+                                 label_visibility="collapsed")
+    elif ui.opciones(categoria):
         if previo == "txt" and ss.get(key + "_t"):      # se agregaron opciones: conservar lo escrito
             ss[key] = ss[key + "_t"].strip() or None
         ss[key + "_modo"] = "sel"
         contenedor.selectbox(
-            etiqueta, _opciones(categoria, key), index=None, key=key, accept_new_options=libre,
-            placeholder="Elegir o escribir…" if libre else "Elegir…",
-            help=("Elegí una descripción o escribí una nueva (solo para esta fila). "
-                  "Para sumarla a la lista, usá Configuración.") if libre
-            else "¿No está? Agregalo en Configuración.")
+            etiqueta, _opciones(categoria, key), index=None, key=key,
+            placeholder="Elegir…", help="¿No está? Agregalo en Configuración.")
     else:
         if previo == "sel" and ss.get(key):             # se quedó sin opciones: conservar lo elegido
             ss[key + "_t"] = ss[key]
@@ -250,7 +261,16 @@ if g.button("Guardar", type="primary", use_container_width=True):
         except Exception as e:
             st.error(f"No se pudo guardar: {e}")
 if p.button("Sacar ficha PDF", use_container_width=True):
-    if not id_valido(ss["f_id"].strip()):
-        st.error("Ingresá un ID válido.")
-    else:
-        ui.ir_a_ficha(ss["f_id"].strip())
+    # Se guarda antes: la ficha se arma desde la base, así que sin guardar no vería lo último editado.
+    insp, errores, avisos = construir()
+    for e in errores:
+        st.error(e)
+    for a in avisos:
+        st.warning(a)
+    if insp:
+        try:
+            repo.guardar(insp)
+        except Exception as e:
+            st.error(f"No se pudo guardar: {e}")
+        else:
+            ui.ir_a_ficha(insp.id, ejecutar=True)

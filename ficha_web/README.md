@@ -15,7 +15,7 @@ Es lo más rápido para probar. Con Docker (recomendado; WeasyPrint necesita Pan
 docker compose up --build
 ```
 
-Abrir <http://localhost:8501>. Sin `.env` arranca en modo mock con la inspección `1001` y fotos de ejemplo (`fixtures/fotos/1001/`; la Fig. 3 falta a propósito para ver el recuadro «Sin foto» y el aviso). Los datos mock viven en memoria: se pierden al reiniciar.
+Abrir <http://localhost:8501>. Sin `.env` arranca en modo mock con la inspección `1001` y fotos de ejemplo (`fixtures/fotos/1001/`; la Fig. 3 falta a propósito para ver el hueco en blanco y el aviso). Los datos mock viven en memoria: se pierden al reiniciar.
 
 ## Configuración real
 

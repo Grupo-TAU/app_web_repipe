@@ -36,7 +36,7 @@ def test_figura_repetida_bloquea_el_guardado(formulario):
     at.run()
     _boton(at, "➕ Agregar patología").click().run()
     nueva = at.session_state["f_pat"][-1]
-    at.selectbox(key=f"pp_{nueva}").set_value("Obstrucción")
+    at.text_input(key=f"pp_{nueva}_t").set_value("Obstrucción")
     at.number_input(key=f"pf_{nueva}").set_value(1)    # la Fig. 1 ya existe
     _boton(at, "Guardar").click().run()
     assert any("repetido" in e.value for e in at.error)
@@ -116,8 +116,9 @@ def test_patologia_se_elige_de_la_lista_configurada(monkeypatch):
     at = AppTest.from_file(str(RAIZ / "pages" / "1_Formulario.py"), default_timeout=30).run()
     at.text_input(key="f_id").set_value("1001").run()
     primera = at.session_state["f_pat"][0]
-    assert "Rotura de tubería" in at.selectbox(key=f"pp_{primera}").options
-    at.selectbox(key=f"pp_{primera}").set_value("Rotura de tubería")
+    assert "Rotura de tubería" in at.selectbox(key=f"pp_{primera}_s").options
+    at.selectbox(key=f"pp_{primera}_s").set_value("Rotura de tubería").run()   # la sugerencia completa el texto
+    assert at.text_input(key=f"pp_{primera}_t").value == "Rotura de tubería"
     _boton(at, "Guardar").click().run()
     assert any("guardada" in x.value for x in at.success)
     assert any(p.patologia == "Rotura de tubería" for p in repositorio().obtener("1001").patologias)
@@ -134,3 +135,17 @@ def test_sin_boton_cargar_y_id_nuevo_conserva_lo_escrito(monkeypatch):
     assert at.text_input(key="f_ubicacion").value == "Av. Italia 3200 esq. Comercio"
     at.text_input(key="f_id").set_value("8888").run()                # ID nuevo tras una inspección cargada: formulario en blanco
     assert at.text_input(key="f_ubicacion").value == ""
+
+
+def test_sacar_ficha_pdf_guarda_y_va_a_vista_previa(monkeypatch):
+    monkeypatch.setenv("USE_MOCK", "1")
+    from ui import repositorio
+    destinos = []
+    monkeypatch.setattr("streamlit.switch_page", destinos.append)   # AppTest de una página no puede navegar
+    at = AppTest.from_file(str(RAIZ / "pages" / "1_Formulario.py"), default_timeout=30).run()
+    at.text_input(key="f_id").set_value("1001").run()
+    _boton(at, "Sacar ficha PDF").click().run()
+    assert not at.exception
+    assert destinos[0] == "pages/3_Vista_previa.py"   # el switch_page real corta la ejecución; el mock no
+    assert at.session_state["ficha_id"] == "1001"
+    assert repositorio().obtener("1001") is not None

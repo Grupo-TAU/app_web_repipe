@@ -21,7 +21,7 @@ def test_html_tiene_datos_y_no_imprime_obs_interna(repo, fuente):
     html = render_html(armar_ficha("1001", repo, fuente))
     assert "1001" in html and "Av. Italia 3200 esq. Comercio" in html
     assert "12,3 m – Fisura longitudinal (Fig. 1)" in html
-    assert "Sin foto" in html            # Fig. 3
+    assert "Sin foto" not in html and 'class="sin-foto"' in html   # Fig. 3: hueco en blanco, sin texto
     assert "olor desde hace" not in html  # obs_interna
 
 
