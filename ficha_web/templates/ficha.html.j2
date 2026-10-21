@@ -313,6 +313,7 @@
     <div class="section-block fotos">
       <div class="section-header">Registro fotográfico</div>
 
+      {% if fotos_fijas | selectattr('src') | list %}
       <table class="img-grid">
         <tr>
           {% for f in fotos_fijas %}
@@ -323,6 +324,7 @@
           {% endfor %}
         </tr>
       </table>
+      {% endif %}
 
       <table class="img-grid figuras">
         {% for fila in filas_figuras %}
