@@ -15,6 +15,8 @@ class Config:
     google_sa_json: str = ""
     drive_parent_folder_id: str = ""
     use_mock: bool = False
+    seguimiento_sheet_id: str = ""
+    seguimiento_hoja: str = "Calendario"
     fotos_local_dir: Path = RAIZ / "fixtures" / "fotos"
     # Página del PDF (CSS @page). No hay .qpt en el repo: A4 vertical por defecto.
     pagina: str = "A4 portrait"
@@ -45,6 +47,8 @@ def cargar_config(entorno: Mapping[str, str] | None = None) -> Config:
         google_sa_json=g("GOOGLE_SA_JSON"),
         drive_parent_folder_id=g("DRIVE_PARENT_FOLDER_ID"),
         use_mock=_verdadero(g("USE_MOCK", "0")),
+        seguimiento_sheet_id=g("SEGUIMIENTO_SHEET_ID"),
+        seguimiento_hoja=g("SEGUIMIENTO_HOJA", "Calendario"),
         fotos_local_dir=Path(carpeta_fotos) if carpeta_fotos else RAIZ / "fixtures" / "fotos",
         pagina=g("PAGINA", "A4 portrait"),
         margen=g("MARGEN", "12mm"),

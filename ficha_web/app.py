@@ -61,6 +61,7 @@ navegacion = st.navigation([
     st.Page("pages/1_Formulario.py", title="Formulario", icon="📝", url_path="formulario", default=True),
     st.Page("pages/2_Ficha.py", title="Fichas", icon="📄", url_path="ficha"),
     st.Page("pages/3_Vista_previa.py", title="Vista previa", icon="🔍", url_path="vista-previa"),
+    st.Page("pages/5_Seguimiento.py", title="Seguimiento", icon="📊", url_path="seguimiento"),
     st.Page("pages/4_Configuracion.py", title="Configuración", icon="⚙️", url_path="configuracion"),
 ])
 navegacion.run()

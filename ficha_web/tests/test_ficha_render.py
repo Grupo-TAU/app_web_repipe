@@ -68,3 +68,12 @@ def test_imagenes_se_reducen_a_1920_de_ancho():
     uri = reducir_a_data_uri(buf.getvalue())
     img = Image.open(io.BytesIO(base64.b64decode(uri.split(",", 1)[1])))
     assert img.width == 1920
+
+
+def test_sin_fotos_fijas_no_hay_fila_general_acceso(repo, fuente):
+    f = armar_ficha("1001", repo, fuente)
+    assert '<table class="img-grid">' in render_html(f)
+    f.fijas.clear()
+    html = render_html(f)
+    assert '<table class="img-grid">' not in html and 'class="fig-label-bar"' not in html
+    assert 'class="img-grid figuras"' in html
