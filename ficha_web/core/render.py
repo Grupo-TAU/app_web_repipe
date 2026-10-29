@@ -16,7 +16,7 @@ CALIDAD_JPEG = 80
 COLUMNAS_FIGURAS = 2   # fotos de patologías: de a 2, en recuadros 16:9
 LOGO = RAIZ / "logo-repipe-claro.png"   # versión clara del logo, para el banner verde (ver scripts/generar_logo_claro.py)
 ENCABEZADO_TITULO = "Inspección televisada de cañerías"
-ENCABEZADO_SUBTITULO = "Con cámara pértiga"
+ENCABEZADO_SUBTITULO = "Con cámara de empuje"
 
 _env = Environment(
     loader=FileSystemLoader(RAIZ / "templates"),

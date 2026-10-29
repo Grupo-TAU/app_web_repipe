@@ -2,7 +2,7 @@
 import streamlit as st
 
 import ui
-from core.auth import iniciar_sesion
+from core.auth import ROL_ADMIN, iniciar_sesion
 
 cfg = ui.config()
 logueado = cfg.use_mock or "sb_cliente" in st.session_state
@@ -31,7 +31,8 @@ def login():
                 st.error("Completá el email y la contraseña.")
                 return
             try:
-                st.session_state["sb_cliente"] = iniciar_sesion(cfg, email.strip(), clave)
+                st.session_state["sb_cliente"], st.session_state["sb_rol"] = iniciar_sesion(
+                    cfg, email.strip(), clave)
             except Exception as e:
                 if "invalid login credentials" in str(e).lower():
                     st.error("Email o contraseña incorrectos.")
@@ -57,11 +58,14 @@ elif st.sidebar.button("Cerrar sesión"):
 for _k in [k for k in st.session_state if str(k).startswith(("f_", "o_", "pm_", "pp_", "pf_"))]:
     st.session_state[_k] = st.session_state[_k]
 
-navegacion = st.navigation([
+paginas = [
     st.Page("pages/1_Formulario.py", title="Formulario", icon="📝", url_path="formulario", default=True),
     st.Page("pages/2_Ficha.py", title="Fichas", icon="📄", url_path="ficha"),
     st.Page("pages/3_Vista_previa.py", title="Vista previa", icon="🔍", url_path="vista-previa"),
-    st.Page("pages/5_Seguimiento.py", title="Seguimiento", icon="📊", url_path="seguimiento"),
     st.Page("pages/4_Configuracion.py", title="Configuración", icon="⚙️", url_path="configuracion"),
-])
+]
+# Seguimiento solo para admins (en modo mock no hay login: se muestra para poder probarla).
+if cfg.use_mock or st.session_state.get("sb_rol") == ROL_ADMIN:
+    paginas.insert(3, st.Page("pages/5_Seguimiento.py", title="Seguimiento", icon="📊", url_path="seguimiento"))
+navegacion = st.navigation(paginas)
 navegacion.run()

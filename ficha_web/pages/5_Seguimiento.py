@@ -78,7 +78,7 @@ else:
 
 st.subheader("Todas las visitas")
 f1, f2 = st.columns([2, 3])
-estados = f1.multiselect("Estado", list(r.por_estado))
+estados = f1.multiselect("Estado", list(r.por_estado), placeholder="Todas")
 texto = f2.text_input("Buscar", placeholder="Cliente, dirección, correo, teléfono…")
 filas = seg.filtrar(visitas, set(estados) or None, texto)
 filas.sort(key=lambda v: (v.fecha is None, v.fecha), reverse=True)
