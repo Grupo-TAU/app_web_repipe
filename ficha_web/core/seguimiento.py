@@ -256,7 +256,7 @@ class SheetsFuenteSeguimiento(FuenteSeguimiento):
                 raise SeguimientoError(
                     "No se pudo abrir la planilla o la pestaña. Revisá SEGUIMIENTO_SHEET_ID, "
                     f"SEGUIMIENTO_HOJA («{self._cfg.seguimiento_hoja}») y que esté compartida "
-                    "(Lector) con la cuenta de servicio.") from e
+                    f"(Lector) con la cuenta de servicio. Detalle de Google: {codigo} {e.reason}") from e
             raise SeguimientoError(f"Error de Google Sheets ({codigo}).") from e
         return visitas_desde_filas(r.get("values", []))
 
